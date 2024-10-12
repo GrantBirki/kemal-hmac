@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+
+source script/setup-env $@
+
+echo -e "📦 ${BLUE}Running ${PURPLE}shards update${BLUE} to update all dependencies${OFF}"
+
+script/preinstall
+
+shards update $@
+
+script/zipper
+script/postinstall
+
+echo -e "✅ ${GREEN}All dependencies have been updated!${OFF}"

@@ -1,0 +1,8 @@
+# To build the entire stack run 'make run'
+
+services:
+  crystal-base-template:
+    environment:
+      LOG_LEVEL: DEBUG
+      # KEMAL_ENV: production
+      CRYSTAL_ENV: production

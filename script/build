@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+source script/setup-env $@
+
+echo -e "🔨 ${BLUE}building in ${PURPLE}release${BLUE} mode${OFF}"
+shards build --production --release --progress --debug --error-trace
+echo -e "📦 ${GREEN}build complete${OFF}"

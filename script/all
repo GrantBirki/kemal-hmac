@@ -1,0 +1,15 @@
+#!/bin/bash
+
+source script/setup-env $@
+
+# runs all formatting scripts and tests at once
+
+set -e
+
+script/format
+echo ""
+
+script/lint --fix
+echo ""
+
+script/test

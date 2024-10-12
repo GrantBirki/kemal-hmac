@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+source script/setup-env $@
+
+echo -e "🧪 ${BLUE}running unit tests...${OFF}"
+
+crystal spec
+
+echo -e "✅ ${GREEN}tests complete!${OFF}"

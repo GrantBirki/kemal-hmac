@@ -1,0 +1,22 @@
+#!/bin/bash
+
+source script/setup-env $@
+
+if [ -f "$VENDOR_SHARDS_INFO_FILE" ]; then
+
+  # Use yq to parse the file and extract shard names and versions
+  shards=$(yq eval '.shards | to_entries | .[] | "\(.key)|\(.value.git)|\(.value.version)"' $VENDOR_SHARDS_INFO_FILE)
+
+  # Loop over each shard
+  echo "$shards" | while IFS= read -r shard; do
+    # Extract name and version
+    name=$(echo $shard | cut -d'|' -f1)
+    version=$(echo $shard | cut -d'|' -f3)
+
+    # if the shard sha256 file does not exist, try to compute and create it
+    if [ ! -f "$SHARDS_INSTALL_PATH/name/$SHARD_SHA_FILE" ]; then
+      shard_cache_sha=$(shasum -a 256 "$SHARDS_CACHED/$name-$version.shard" | cut -d' ' -f1)
+      cat > "$SHARDS_INSTALL_PATH/$name/$SHARD_SHA_FILE" <<< "$shard_cache_sha"
+    fi
+  done
+fi

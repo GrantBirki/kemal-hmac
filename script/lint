@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+source script/setup-env $@
+
+echo -e "🖌️  ${BLUE}linting ${PURPLE}crystal${BLUE} files..."
+
+"$DIR/bin/ameba" $@
+
+echo -e "✅ ${GREEN}linting complete!${OFF}"

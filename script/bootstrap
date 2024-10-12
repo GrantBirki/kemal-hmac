@@ -1,0 +1,80 @@
+#!/bin/bash
+
+set -e
+
+source script/setup-env $@
+
+crystal_path_var="$(crystal env CRYSTAL_PATH)"
+# if the crystal_path_var does not contain 'vendor/shards/install' then we need to add it to the CRYSTAL_PATH
+if [[ "$crystal_path_var" != *"vendor/shards/install"* ]]; then
+  echo -e "💡 ${YELLOW}WARNING${OFF}: This project uses a custom vendoring strategy. Please update your ${PURPLE}CRYSTAL_PATH${OFF} env var to also check the ${PURPLE}vendor/shards/install${OFF} dir relative to the root of this (and other) crystal projects for builds to work properly. Example:\n"
+  echo -e "${PURPLE}export CRYSTAL_PATH=\"vendor/shards/install:$(crystal env CRYSTAL_PATH)\"${OFF}\n"
+  echo -e "It is suggested to add this to your ${PURPLE}.bashrc${OFF} or ${PURPLE}.zshrc${OFF} file so you only have to update it once and then can forget about it.\n"
+fi
+
+# check to ensure both crystal and shards are installed
+if ! [ -x "$(command -v crystal)" ]; then
+  echo -e "❌ ${RED}Error${OFF}: crystal is not installed"
+  echo "Please install crystal via crenv -> https://github.com/crenv/crenv"
+  exit 1
+fi
+
+if ! [ -x "$(command -v shards)" ]; then
+  echo -e "❌ ${RED}Error${OFF}: shards is not installed"
+  echo "Please install crystal (comes with shards) via crenv -> https://github.com/crenv/crenv"
+  exit 1
+fi
+
+compatability_warning=""
+
+# Get OS info
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  os="linux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  os="mac"
+
+  # if CRYSTAL_OPTS is not set to `--link-flags=-Wl` then print a warning
+  if [[ -z "$CRYSTAL_OPTS" || "$CRYSTAL_OPTS" != "--link-flags=-Wl" ]]; then
+    compatability_warning="⚠️ ${YELLOW}Warning${OFF}: please consider exporting the following env vars in your terminal -> https://github.com/GrantBirki/dotfiles/blob/42526c0004cd7562883e5019db8e462e8f307e6a/dotfiles/.bashrc#L201"
+  fi
+
+elif [[ "$OSTYPE" == "cygwin" ]]; then
+  os="cygwin"
+  compatability_warning="⚠️ ${YELLOW}Warning${OFF}: cygwin is not officially supported. Please use WSL2 or a Linux VM"
+elif [[ "$OSTYPE" == "msys" ]]; then
+  os="msys"
+  compatability_warning="⚠️ ${YELLOW}Warning${OFF}: msys is not officially supported. Please use WSL2 or a Linux VM"
+elif [[ "$OSTYPE" == "win32" ]]; then
+  os="win"
+  compatability_warning="⚠️ ${YELLOW}Warning${OFF}: Windows is not officially supported. Please use WSL2 or a Linux VM"
+elif [[ "$OSTYPE" == "freebsd"* ]]; then
+  os="freebsd"
+  compatability_warning="⚠️ ${YELLOW}Warning${OFF}: FreeBSD is not officially supported. It may work but it is not tested. Please consider using a debian based Linux distro"
+else
+  os="unknown"
+  compatability_warning="⚠️ ${YELLOW}Warning${OFF}: Your OS is not officially supported. It may work but it is not tested. Please consider using a debian based Linux distro"
+fi
+
+# print the warning if it isn't an empty string and SUPPRESS_BOOTSTRAP_WARNINGS is not true
+if [[ ! -z "$compatability_warning" && "$SUPPRESS_BOOTSTRAP_WARNINGS" != "true" ]]; then
+  echo -e "$compatability_warning"
+  echo ""
+  echo -e "You can set ${PURPLE}SUPPRESS_BOOTSTRAP_WARNINGS=true${OFF} in your environment to suppress this warning"
+fi
+
+script/preinstall
+script/unzipper
+
+# for now, I think I can get away with `--ci` passing in `--skip-postinstall`. This may change one day when I actually need to run the postinstall command for deps in ci
+ci_flags=""
+if [[ "$@" == *"--ci"* ]]; then
+  ci_flags="--skip-postinstall --skip-executables"
+fi
+
+# install the shards
+shards install --local --frozen $ci_flags $@
+
+# shards install often wipes out our custom shards sha256 file so we need to recompute it if they are gone
+script/compute-dep-shas
+
+script/postinstall $@
