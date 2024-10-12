@@ -1,22 +1,17 @@
-name: base-template
+name: kemal-hmac
 version: 0.1.0
 
 authors:
   - GrantBirki
 
-targets:
-  crystal-base-template:
-    main: src/cli.cr
-
-crystal: ">= 1.13.2"
+crystal: ">= 1"
 
 license: MIT
-
-dependencies:
-  octokit:
-    github: octokit-cr/octokit.cr
 
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba
     version: ~> 1.6.1
+  kemal:
+    github: kemalcr/kemal
+    version: ~> 1.6.0

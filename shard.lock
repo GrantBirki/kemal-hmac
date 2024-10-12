@@ -2,17 +2,21 @@ version: 2.0
 shards:
   ameba:
     git: https://github.com/crystal-ameba/ameba.git
-    version: 1.6.1
+    version: 1.6.2
 
-  halite:
-    git: https://github.com/icyleaf/halite.git
-    version: 0.12.0
+  backtracer:
+    git: https://github.com/sija/backtracer.cr.git
+    version: 1.2.2
 
-  json_mapping:
-    git: https://github.com/crystal-lang/json_mapping.cr.git
-    version: 0.1.1
+  exception_page:
+    git: https://github.com/crystal-loot/exception_page.git
+    version: 0.4.1
 
-  octokit:
-    git: https://github.com/octokit-cr/octokit.cr.git
-    version: 0.3.0
+  kemal:
+    git: https://github.com/kemalcr/kemal.git
+    version: 1.6.0
+
+  radix:
+    git: https://github.com/luislavena/radix.git
+    version: 0.4.1
 
