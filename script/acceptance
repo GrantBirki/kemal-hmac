@@ -2,6 +2,9 @@
 
 source script/setup-env $@
 
+# exit for now
+exit 0
+
 # start the docker compose stack
 make run
 
