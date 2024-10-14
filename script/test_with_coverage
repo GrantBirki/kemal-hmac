@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+
+source script/setup-env $@
+
+# check to ensure both crystal and shards are installed
+if ! [ -x "$(command -v kcov)" ]; then
+  echo -e "❌ ${RED}Error${OFF}: kcov is not installed"
+  echo "Please install kcov to use code coverage reports:"
+  echo " - macOS: https://formulae.brew.sh/formula/kcov"
+  echo " - other: https://github.com/SimonKagstrom/kcov/blob/c71d42f1cadddbd2da38c1101d71ef2b84065c7b/INSTALL.md"
+  exit 1
+fi
+
+# only build the require_spec binary if it's not already built
+if [ ! -f "$DIR/bin/require_spec" ]; then
+  echo "building require_spec binary..."
+  crystal build "$DIR/script/require_spec.cr" -D skip-integration -o "$DIR/bin/require_spec"
+fi
+
+kcov --clean --include-path=$DIR/src "$DIR/coverage" "$DIR/bin/require_spec"
+
+CRYSTAL_OPTS="" crystal tool unreachable "$DIR/script/require_spec.cr" --check

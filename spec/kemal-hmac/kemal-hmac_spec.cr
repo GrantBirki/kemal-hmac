@@ -1,19 +1,22 @@
 require "../spec_helper"
 
 describe "Kemal::Hmac" do
-  #   it "goes to next handler with correct credentials" do
-  #     hmac_handler = Kemal::Hmac::Handler.new()
-  #     request = HTTP::Request.new(
-  #       "GET",
-  #       "/",
-  #       headers: HTTP::Headers{"foo" => "bar"},
-  #     )
+  it "uses a custom handler with path matching and sends a request to an endpoint that does not require hmac auth" do
+    hmac_handler = SpecAuthHandler.new
+    request = HTTP::Request.new(
+      "GET",
+      "/health"
+    )
 
-  #     io, context = create_request_and_return_io_and_context(hmac_handler, request)
-  #     response = HTTP::Client::Response.from_io(io, decompress: false)
-  #     response.status_code.should eq 404
-  #     context.kemal_authorized_client?.should eq("serdar")
-  #   end
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should be nil
+  end
+
+  it "calls the hmac_auth helper method without errors" do
+    hmac_auth[0].to_s.should contain "Kemal::Hmac::Handler"
+  end
 
   it "returns 401 when a header is provided but it is not for hmac auth" do
     hmac_handler = Kemal::Hmac::Handler.new

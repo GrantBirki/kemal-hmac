@@ -94,10 +94,5 @@ module Kemal::Hmac
     def missing_hmac_headers(headers : Hash(String, String?)) : Array(String)
       headers.select { |_, v| v.nil? }.keys
     end
-
-    def authorize?(value) : String?
-      username, password = Base64.decode_string(value[BASIC.size + 1..-1]).split(":")
-      @credentials.authorize?(username, password)
-    end
   end
 end

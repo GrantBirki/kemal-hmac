@@ -21,3 +21,5 @@ lib/**/spec/
 # secrets
 creds.env
 *.pem
+
+coverage/
