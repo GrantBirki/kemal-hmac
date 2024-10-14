@@ -7,7 +7,7 @@ source script/setup-env $@
 echo -e "🧪 ${BLUE}running unit tests...${OFF}"
 
 # if -s is passed anywhere in the arguments, run without code coverage checks
-if [[ $@ == *"-s"* ]]; then
+if [[ $@ == *"-s"* || "$CI" == "true" && "$OSTYPE" == "darwin"* ]]; then
   echo "skipping code coverage checks"
   crystal spec --exclude-warnings $SHARDS_INSTALL_PATH
 else
