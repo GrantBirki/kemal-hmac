@@ -6,6 +6,6 @@ source script/setup-env $@
 
 echo -e "🧪 ${BLUE}running unit tests...${OFF}"
 
-crystal spec
+crystal spec --exclude-warnings $SHARDS_INSTALL_PATH
 
 echo -e "✅ ${GREEN}tests complete!${OFF}"
