@@ -9,6 +9,12 @@ This project uses a highly opinionated dependency vendoring strategy. This strat
 3. The `script/bootstrap` command installs vendored dependencies with `SHARDS_CACHE_PATH="vendor/.cache/shards" shards install ...` to ensure that each project has its own cache and does not interfere with other crystal projects
 4. The `script/update` command will re-vendor all dependencies and update the vendored dependencies in the repository. This will always result is changes to all dependencies, even if the version has not changed. This is to ensure that the vendored dependencies are always up to date and can be used to build the project.
 
+## Testing 🧪
+
+- All code must have unit tests
+- 100% code coverage is enforced
+- Acceptance tests are used to test the application as a whole
+
 ## Development Commands 💻
 
 ### Setup

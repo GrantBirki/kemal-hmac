@@ -6,6 +6,13 @@ source script/setup-env $@
 
 echo -e "🧪 ${BLUE}running unit tests...${OFF}"
 
-crystal spec
+# if -s is passed anywhere in the arguments, run without code coverage checks
+if [[ $@ == *"-s"* || "$CI" == "true" && "$OSTYPE" == "darwin"* ]]; then
+  echo "skipping code coverage checks"
+  crystal spec --exclude-warnings $SHARDS_INSTALL_PATH
+else
+  script/test_with_coverage $@
+  echo -e "\n"
+fi
 
 echo -e "✅ ${GREEN}tests complete!${OFF}"
