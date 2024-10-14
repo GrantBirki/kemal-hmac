@@ -22,7 +22,7 @@ fi
 # only build the require_spec binary if it's not already built
 if [ ! -f "$DIR/bin/require_spec" ]; then
   echo "building require_spec binary..."
-  crystal build "$DIR/script/require_spec.cr" -D skip-integration -o "$DIR/bin/require_spec"
+  crystal build "$DIR/script/require_spec.cr" -D skip-integration -o "$DIR/bin/require_spec" --exclude-warnings $SHARDS_INSTALL_PATH
 fi
 
 $KCOV_BIN --clean --include-path=$DIR/src "$DIR/coverage" "$DIR/bin/require_spec"
