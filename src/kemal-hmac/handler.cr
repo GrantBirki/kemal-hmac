@@ -87,8 +87,10 @@ module Kemal::Hmac
       timestamp = headers[@hmac_timestamp_header].not_nil!
       # token = headers[@hmac_token_header].not_nil!
 
+      # validate the timestamp
       timestamp_result = recent_timestamp?(timestamp, @timestamp_second_window)
 
+      # reject the request if the timestamp is not valid
       unless timestamp_result[:valid]
         context.response.status_code = @rejected_code
         context.response.print "#{@rejected_message_prefix} #{timestamp_result[:message]}"
