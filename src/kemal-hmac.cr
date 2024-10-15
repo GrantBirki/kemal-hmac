@@ -11,7 +11,8 @@ module Kemal
   end
 end
 
-# Helper to easily add HTTP Basic Auth support.
+# Helper method to easily add HMAC auth support to a kemal app
+# See the README for more details or the source file: src/kemal-hmac/handler.cr 
 def hmac_auth(
   hmac_client_header : String? = nil,
   hmac_timestamp_header : String? = nil,
