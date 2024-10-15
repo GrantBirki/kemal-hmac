@@ -41,6 +41,109 @@ describe "Kemal::Hmac" do
     context.kemal_authorized_client?.should eq(client)
   end
 
+  it "uses a custom handler and correct HMAC auth and the request flows through successfully using the green secret" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc)
+    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octo-secret-green")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "HTTP_X_HMAC_CLIENT"    => client,
+        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
+        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
+  it "rejects the request when the HMAC token does not match exactly" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc)
+    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octoo-secret-blue")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "HTTP_X_HMAC_CLIENT"    => client,
+        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
+        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: HMAC token does not match"
+    context.kemal_authorized_client?.should be nil
+  end
+
+  it "rejects the request when the HMAC token does not match exactly due to a different path" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc)
+    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octo-secret-blue")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/secure",
+      headers: HTTP::Headers{
+        "HTTP_X_HMAC_CLIENT"    => client,
+        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
+        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: HMAC token does not match"
+    context.kemal_authorized_client?.should be nil
+  end
+
+  it "rejects the request when the HMAC token does not match exactly since the timestamp is different" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc + 1.second)
+    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octoo-secret-blue")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "HTTP_X_HMAC_CLIENT"    => client,
+        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
+        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: HMAC token does not match"
+    context.kemal_authorized_client?.should be nil
+  end
+
   it "uses a custom handler and fails due to no matching client secrets" do
     hmac_handler = SpecAuthHandler.new(
       hmac_secrets: {} of String => Array(String),
