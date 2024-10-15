@@ -287,4 +287,30 @@ describe "Kemal::Hmac" do
     response.body.should contain "Unauthorized: Timestamp is too old or in the future (ensure it's in UTC)"
     context.kemal_authorized_client?.should eq(nil)
   end
+
+  it "successfully flows through and passes when fetching secrets from the ENV" do
+    client = "Octo1-Client_prod"
+    secret = "super-secret"
+    hmac_handler = Kemal::Hmac::Handler.new
+    hmac_client = Kemal::Hmac::Client.new(client, secret, "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    ENV["#{client.upcase}_HMAC_SECRET_BLUE"] = "unset"
+    ENV["#{client.upcase}_HMAC_SECRET_GREEN"] = secret
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
 end
