@@ -25,9 +25,9 @@ module Kemal::Hmac
       hmac_token = Kemal::Hmac::Token.new(@client, path, timestamp).hexdigest(@secret)
 
       return {
-        "hmac-client"    => @client,
-        "hmac-timestamp" => timestamp,
-        "hmac-token"     => hmac_token,
+        HMAC_CLIENT_HEADER    => @client,
+        HMAC_TIMESTAMP_HEADER => timestamp,
+        HMAC_TOKEN_HEADER     => hmac_token,
       }
     end
   end

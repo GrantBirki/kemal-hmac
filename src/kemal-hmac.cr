@@ -6,8 +6,16 @@ module Kemal
   module Hmac
     class InvalidFormatError < Exception; end
 
-    KEY_VALIDATION_REGEX = /^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$/
-    ALGORITHM            = algorithm(ENV.fetch("HMAC_ALGORITHM", "SHA256").upcase)
+    HMAC_CLIENT_HEADER           = ENV.fetch("HMAC_CLIENT_HEADER", "hmac-client")
+    HMAC_TIMESTAMP_HEADER        = ENV.fetch("HMAC_TIMESTAMP_HEADER", "hmac-timestamp")
+    HMAC_TOKEN_HEADER            = ENV.fetch("HMAC_TOKEN_HEADER", "hmac-token")
+    HMAC_TIMESTAMP_SECOND_WINDOW = ENV.fetch("HMAC_TIMESTAMP_SECOND_WINDOW", 30).to_i
+    HMAC_REJECTED_CODE           = ENV.fetch("HMAC_REJECTED_CODE", 401).to_i
+    HMAC_REJECTED_MESSAGE_PREFIX = ENV.fetch("HMAC_REJECTED_MESSAGE_PREFIX", "Unauthorized:")
+    HMAC_KEY_SUFFIX_LIST         = ENV.fetch("HMAC_KEY_SUFFIX_LIST", "HMAC_SECRET_BLUE,HMAC_SECRET_GREEN").split(",").map(&.strip)
+    HMAC_KEY_DELIMITER           = ENV.fetch("HMAC_KEY_DELIMITER", "_")
+    KEY_VALIDATION_REGEX         = /^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$/
+    ALGORITHM                    = algorithm(ENV.fetch("HMAC_ALGORITHM", "SHA256").upcase)
   end
 end
 
