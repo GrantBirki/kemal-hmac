@@ -12,7 +12,7 @@ module Kemal
 end
 
 # Helper method to easily add HMAC auth support to a kemal app
-# See the README for more details or the source file: src/kemal-hmac/handler.cr 
+# See the README for more details or the source file: src/kemal-hmac/handler.cr
 def hmac_auth(
   hmac_client_header : String? = nil,
   hmac_timestamp_header : String? = nil,
@@ -23,7 +23,7 @@ def hmac_auth(
   hmac_key_suffix_list : Array(String)? = nil,
   hmac_key_delimiter : String? = nil,
   hmac_secrets : Hash(String, Array(String)) = {} of String => Array(String)
- )
+)
   add_handler Kemal.config.hmac_handler.new(
     hmac_client_header: hmac_client_header,
     hmac_timestamp_header: hmac_timestamp_header,
