@@ -14,9 +14,9 @@ module Kemal::Hmac
   # `HTTP::Server::Context#authorized_hmac_client` is set when the client is
   # authorized.
   class Handler < Kemal::Handler
-    HMAC_CLIENT_HEADER           = ENV.fetch("HMAC_CLIENT_HEADER", "HTTP_X_HMAC_CLIENT")
-    HMAC_TIMESTAMP_HEADER        = ENV.fetch("HMAC_TIMESTAMP_HEADER", "HTTP_X_HMAC_TIMESTAMP")
-    HMAC_TOKEN_HEADER            = ENV.fetch("HMAC_TOKEN_HEADER", "HTTP_X_HMAC_TOKEN")
+    HMAC_CLIENT_HEADER           = ENV.fetch("HMAC_CLIENT_HEADER", "hmac-client")
+    HMAC_TIMESTAMP_HEADER        = ENV.fetch("HMAC_TIMESTAMP_HEADER", "hmac-timestamp")
+    HMAC_TOKEN_HEADER            = ENV.fetch("HMAC_TOKEN_HEADER", "hmac-token")
     HMAC_TIMESTAMP_SECOND_WINDOW = ENV.fetch("HMAC_TIMESTAMP_SECOND_WINDOW", 30).to_i
     HMAC_REJECTED_CODE           = ENV.fetch("HMAC_REJECTED_CODE", 401).to_i
     HMAC_REJECTED_MESSAGE_PREFIX = ENV.fetch("HMAC_REJECTED_MESSAGE_PREFIX", "Unauthorized:")

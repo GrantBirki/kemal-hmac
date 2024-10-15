@@ -29,9 +29,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/api",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => client,
-        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
-        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+        "hmac-client"    => client,
+        "hmac-timestamp" => timestamp,
+        "hmac-token"     => hmac_token,
       },
     )
 
@@ -57,9 +57,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/api",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => client,
-        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
-        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+        "hmac-client"    => client,
+        "hmac-timestamp" => timestamp,
+        "hmac-token"     => hmac_token,
       },
     )
 
@@ -82,9 +82,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/api",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => client,
-        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
-        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+        "hmac-client"    => client,
+        "hmac-timestamp" => timestamp,
+        "hmac-token"     => hmac_token,
       },
     )
 
@@ -108,9 +108,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/secure",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => client,
-        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
-        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+        "hmac-client"    => client,
+        "hmac-timestamp" => timestamp,
+        "hmac-token"     => hmac_token,
       },
     )
 
@@ -134,9 +134,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/api",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => client,
-        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
-        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+        "hmac-client"    => client,
+        "hmac-timestamp" => timestamp,
+        "hmac-token"     => hmac_token,
       },
     )
 
@@ -155,9 +155,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/api",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => "octo-client-with-no-secrets",
-        "HTTP_X_HMAC_TIMESTAMP" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc),
-        "HTTP_X_HMAC_TOKEN"     => "octo-token",
+        "hmac-client"    => "octo-client-with-no-secrets",
+        "hmac-timestamp" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc),
+        "hmac-token"     => "octo-token",
       },
     )
 
@@ -176,9 +176,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/api",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => "octo-client-&-bad-secret",
-        "HTTP_X_HMAC_TIMESTAMP" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc),
-        "HTTP_X_HMAC_TOKEN"     => "octo-token",
+        "hmac-client"    => "octo-client-&-bad-secret",
+        "hmac-timestamp" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc),
+        "hmac-token"     => "octo-token",
       },
     )
 
@@ -203,7 +203,7 @@ describe "Kemal::Hmac" do
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
     response = HTTP::Client::Response.from_io(io, decompress: false)
     response.status_code.should eq 401
-    response.headers["missing-hmac-headers"].should eq "HTTP_X_HMAC_CLIENT,HTTP_X_HMAC_TIMESTAMP,HTTP_X_HMAC_TOKEN"
+    response.headers["missing-hmac-headers"].should eq "hmac-client,hmac-timestamp,hmac-token"
     response.body.should contain "Unauthorized: missing required hmac headers"
     context.kemal_authorized_client?.should eq(nil)
   end
@@ -217,7 +217,7 @@ describe "Kemal::Hmac" do
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
     response = HTTP::Client::Response.from_io(io, decompress: false)
     response.status_code.should eq 401
-    response.headers["missing-hmac-headers"].should eq "HTTP_X_HMAC_CLIENT,HTTP_X_HMAC_TIMESTAMP,HTTP_X_HMAC_TOKEN"
+    response.headers["missing-hmac-headers"].should eq "hmac-client,hmac-timestamp,hmac-token"
     response.body.should contain "Unauthorized: missing required hmac headers"
     context.kemal_authorized_client?.should eq(nil)
   end
@@ -227,12 +227,12 @@ describe "Kemal::Hmac" do
     request = HTTP::Request.new(
       "GET",
       "/",
-      headers: HTTP::Headers{"HTTP_X_HMAC_CLIENT" => "octo-client"},
+      headers: HTTP::Headers{"hmac-client" => "octo-client"},
     )
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
     response = HTTP::Client::Response.from_io(io, decompress: false)
     response.status_code.should eq 401
-    response.headers["missing-hmac-headers"].should eq "HTTP_X_HMAC_TIMESTAMP,HTTP_X_HMAC_TOKEN"
+    response.headers["missing-hmac-headers"].should eq "hmac-timestamp,hmac-token"
     response.body.should contain "Unauthorized: missing required hmac headers"
     context.kemal_authorized_client?.should eq(nil)
   end
@@ -243,9 +243,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => "octo-client",
-        "HTTP_X_HMAC_TIMESTAMP" => Time.utc.to_s,
-        "HTTP_X_HMAC_TOKEN"     => "octo-token",
+        "hmac-client"    => "octo-client",
+        "hmac-timestamp" => Time.utc.to_s,
+        "hmac-token"     => "octo-token",
       },
     )
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
@@ -261,9 +261,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => "octo-client",
-        "HTTP_X_HMAC_TIMESTAMP" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc + 100.seconds),
-        "HTTP_X_HMAC_TOKEN"     => "octo-token",
+        "hmac-client"    => "octo-client",
+        "hmac-timestamp" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc + 100.seconds),
+        "hmac-token"     => "octo-token",
       },
     )
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
@@ -279,9 +279,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => "octo-client",
-        "HTTP_X_HMAC_TIMESTAMP" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc - 100.seconds),
-        "HTTP_X_HMAC_TOKEN"     => "octo-token",
+        "hmac-client"    => "octo-client",
+        "hmac-timestamp" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc - 100.seconds),
+        "hmac-token"     => "octo-token",
       },
     )
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
