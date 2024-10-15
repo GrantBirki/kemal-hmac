@@ -31,6 +31,7 @@ def hmac_auth(
   rejected_message_prefix : String? = nil,
   hmac_key_suffix_list : Array(String)? = nil,
   hmac_key_delimiter : String? = nil,
+  hmac_algorithm : String? = nil,
 )
   add_handler Kemal.config.hmac_handler.new(
     hmac_secrets: hmac_secrets,
@@ -42,5 +43,6 @@ def hmac_auth(
     rejected_message_prefix: rejected_message_prefix,
     hmac_key_suffix_list: hmac_key_suffix_list,
     hmac_key_delimiter: hmac_key_delimiter,
+    hmac_algorithm: hmac_algorithm,
   )
 end

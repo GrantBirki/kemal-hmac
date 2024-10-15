@@ -7,13 +7,14 @@ module Kemal::Hmac
   # Returns 401 "Unauthorized" with wrong credentials.
   #
   # ```
-  # hmac_auth "todo"
-  # # hmac_auth ["todo1", "todo2"]
+  # hmac_auth({"my_client" => ["my_secret"]})
   # ```
   #
-  # `HTTP::Server::Context#authorized_hmac_client` is set when the client is
+  # `HTTP::Server::Context#authorized_hmac_client?` is set when the client is
   # authorized.
   class Handler < Kemal::Handler
+    @hmac_algorithm : OpenSSL::Algorithm
+
     # initialize the Kemal::Hmac::Handler
     # note: "BLUE" and "GREEN" in this context are two different secrets for the same client. This is a common pattern to allow for key rotation without downtime.
     # examples:
@@ -26,6 +27,7 @@ module Kemal::Hmac
     #  rejected_message_prefix: "Unauthorized:"
     #  hmac_key_suffix_list: ["HMAC_SECRET_BLUE", "HMAC_SECRET_GREEN"] - only used for env variable lookups
     #  hmac_key_delimiter: "_" - only used for env variable lookups
+    #  hmac_algorithm: "SHA256" 
     def initialize(
       hmac_secrets : Hash(String, Array(String)) = {} of String => Array(String),
       hmac_client_header : String? = nil,
@@ -36,6 +38,7 @@ module Kemal::Hmac
       rejected_message_prefix : String? = nil,
       hmac_key_suffix_list : Array(String)? = nil,
       hmac_key_delimiter : String? = nil,
+      hmac_algorithm : String? = nil,
     )
       @hmac_client_header = hmac_client_header || HMAC_CLIENT_HEADER
       @hmac_timestamp_header = hmac_timestamp_header || HMAC_TIMESTAMP_HEADER
@@ -45,6 +48,12 @@ module Kemal::Hmac
       @rejected_message_prefix = rejected_message_prefix || HMAC_REJECTED_MESSAGE_PREFIX
       @hmac_key_suffix_list = hmac_key_suffix_list || HMAC_KEY_SUFFIX_LIST
       @hmac_key_delimiter = hmac_key_delimiter || HMAC_KEY_DELIMITER
+
+      if hmac_algorithm.nil?
+        @hmac_algorithm = ALGORITHM
+      else
+        @hmac_algorithm = algorithm(hmac_algorithm.upcase) || ALGORITHM
+      end
 
       @required_hmac_headers = [
         @hmac_client_header,
@@ -133,7 +142,7 @@ module Kemal::Hmac
     # :param timestamp: timestamp used to build token
     # :return: True if token matches, False otherwise
     def valid_token?(request_token, secret, client, path, timestamp)
-      token = Kemal::Hmac::Token.new(client, path, timestamp)
+      token = Kemal::Hmac::Token.new(client, path, timestamp, @hmac_algorithm)
       Crypto::Subtle.constant_time_compare(token.hexdigest(secret), request_token)
     end
 
