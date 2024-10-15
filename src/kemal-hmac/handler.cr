@@ -100,7 +100,7 @@ module Kemal::Hmac
       end
 
       # attempt to load the secrets for the given client
-      begin 
+      begin
         client_secrets = load_secrets(client)
       rescue ex : InvalidSecretError
         context.response.status_code = @rejected_code
