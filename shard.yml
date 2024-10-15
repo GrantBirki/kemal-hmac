@@ -15,3 +15,6 @@ development_dependencies:
   kemal:
     github: kemalcr/kemal
     version: ~> 1.6.0
+  crest:
+    github: mamantoha/crest
+    version: ~> 1.4.1
