@@ -22,16 +22,16 @@ describe "Kemal::Hmac" do
       hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
     )
 
-    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc)
-    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octo-secret-blue")
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api")
 
     request = HTTP::Request.new(
       "GET",
       "/api",
       headers: HTTP::Headers{
-        "hmac-client"    => client,
-        "hmac-timestamp" => timestamp,
-        "hmac-token"     => hmac_token,
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
       },
     )
 
@@ -47,9 +47,6 @@ describe "Kemal::Hmac" do
       hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
     )
 
-    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc)
-    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octo-secret-green")
-
     hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
     headers = hmac_client.generate_headers("/api")
 
@@ -57,9 +54,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/api",
       headers: HTTP::Headers{
-        "hmac-client"    => client,
-        "hmac-timestamp" => timestamp,
-        "hmac-token"     => hmac_token,
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
       },
     )
 

@@ -3,12 +3,12 @@ require "./token"
 module Kemal::Hmac
   class Client
     def initialize(client : String, secret : String, algorithm : String? = "SHA256")
-      @client = client.upcase
+      @client = client
       @secret = secret
       algo = (algorithm || ENV.fetch("HMAC_ALGORITHM", "SHA256")).upcase
       @algorithm = Kemal::Hmac.algorithm(algo)
 
-      unless KEY_VALIDATION_REGEX.match(@client)
+      unless KEY_VALIDATION_REGEX.match(@client.upcase)
         raise InvalidSecretError.new("client name must only contain letters, numbers, -, or _")
       end
     end
