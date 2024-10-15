@@ -2,71 +2,27 @@
 
 source script/setup-env $@
 
-# exit for now
-exit 0
+# start and background the server process
+echo -e "🚀 ${BLUE}starting the server${OFF}"
 
-# start the docker compose stack
-make run
+# Start the Crystal server in the background
+crystal run spec/acceptance/server.cr &
 
-ITS_UP="attempting to crunch the numbers"
+# Get the PID of the background process
+SERVER_PID=$!
 
-# initialize counter
-counter=0
+# Define a function to kill the background process
+cleanup() {
+  echo "Killing background process..."
+  kill $SERVER_PID
+}
 
-echo -e "${BLUE}waiting for the service to start...${OFF}"
+# Set the trap to call the cleanup function on script exit
+trap cleanup EXIT
 
-# wait for the server to start by grep-ing the logs for the ITS_UP string
-while ! docker compose logs crystal-base-template | grep "$ITS_UP"; do
-  sleep 1
-  # increment counter
-  counter=$((counter+1))
-  # if counter is 120, exit the loop
-  if [ $counter -eq 120 ]; then
-    echo "timeout reached - service did not start"
-    exit 1
-  fi
-done
+# run the tests
+echo -e "🧪 ${BLUE}running the acceptance tests${OFF}"
+crystal run spec/acceptance/tests.cr
 
-echo -e "${GREEN}the service is up! starting acceptance tests${OFF}\n"
-
-###### acceptance tests ######
-
-mkdir -p $DIR/tmp
-
-SUCCESS="true"
-
-# save the logs of the container to a file
-docker compose logs crystal-base-template > $DIR/tmp/acceptance-test-logs.txt
-
-# look for the number 234123548 in the logs
-grep -q "234123548" $DIR/tmp/acceptance-test-logs.txt
-
-# if the number 5 is not found, set SUCCESS to false
-if [ $? -eq 0 ]; then
-  echo -e "✅ ${GREEN}number 234123548 found in logs${OFF}"
-else
-  SUCCESS="false"
-fi
-
-script_server_results=$(script/server 1344 5)
-
-# check for the 1349 text in the results
-if [[ $script_server_results == *"1349"* ]]; then
-  echo -e "✅ ${GREEN}number 1349 found in script/server results${OFF}"
-else
-  SUCCESS="false"
-fi
-
-###### acceptance tests results ######
-
-# cleanup
-rm $DIR/tmp/acceptance-test-logs.txt
-
-echo -e "\n${PURPLE}acceptance tests results:${OFF}"
-if [[ $SUCCESS == "true" ]]; then
-  echo -e "✅ ${GREEN}all acceptance tests passed${OFF}"
-  exit 0
-else
-  echo -e "${RED}acceptance tests failed${OFF}"
-  exit 1
-fi
+# Wait for the background process to finish (if needed)
+wait $SERVER_PID
