@@ -28,6 +28,7 @@ module Kemal::Hmac
     #  hmac_key_suffix_list: ["HMAC_SECRET_BLUE", "HMAC_SECRET_GREEN"] - only used for env variable lookups
     #  hmac_key_delimiter: "_" - only used for env variable lookups
     #  hmac_algorithm: "SHA256"
+    #  enable_env_lookup: true (this value is set to false by default) 
     def initialize(
       hmac_secrets : Hash(String, Array(String)) = {} of String => Array(String),
       hmac_client_header : String? = nil,
@@ -39,6 +40,7 @@ module Kemal::Hmac
       hmac_key_suffix_list : Array(String)? = nil,
       hmac_key_delimiter : String? = nil,
       hmac_algorithm : String? = nil,
+      enable_env_lookup : Bool = false,
     )
       @hmac_client_header = hmac_client_header || HMAC_CLIENT_HEADER
       @hmac_timestamp_header = hmac_timestamp_header || HMAC_TIMESTAMP_HEADER
@@ -49,6 +51,7 @@ module Kemal::Hmac
       @hmac_key_suffix_list = hmac_key_suffix_list || HMAC_KEY_SUFFIX_LIST
       @hmac_key_delimiter = hmac_key_delimiter || HMAC_KEY_DELIMITER
       @hmac_algorithm = fetch_hmac_algorithm(hmac_algorithm)
+      @enable_env_lookup = enable_env_lookup
 
       @required_hmac_headers = [
         @hmac_client_header,
@@ -169,6 +172,9 @@ module Kemal::Hmac
       if @secrets_cache.has_key?(key)
         return @secrets_cache[key]
       end
+
+      # exit early if env lookups are explicitly disabled
+      return [] of String unless @enable_env_lookup
 
       unless KEY_VALIDATION_REGEX.match(key)
         raise InvalidFormatError.new("client name must only contain letters, numbers, -, or _")

@@ -247,6 +247,7 @@ describe "Kemal::Hmac" do
   it "uses a custom handler and fails due to a failed secret regex match" do
     hmac_handler = SpecAuthHandler.new(
       hmac_secrets: {} of String => Array(String),
+      enable_env_lookup: true
     )
     request = HTTP::Request.new(
       "GET",
@@ -370,7 +371,7 @@ describe "Kemal::Hmac" do
   it "successfully flows through and passes when fetching secrets from the ENV" do
     client = "Octo1-Client_prod"
     secret = "super-secret"
-    hmac_handler = Kemal::Hmac::Handler.new
+    hmac_handler = Kemal::Hmac::Handler.new(enable_env_lookup: true)
     hmac_client = Kemal::Hmac::Client.new(client, secret, "SHA256")
     headers = hmac_client.generate_headers("/api")
 
@@ -391,5 +392,32 @@ describe "Kemal::Hmac" do
     response = HTTP::Client::Response.from_io(io, decompress: false)
     response.status_code.should eq 404
     context.kemal_authorized_client?.should eq(client)
+  end
+
+  it "fails to flow through when fetching secrets from the env since it is disabled by default" do
+    client = "Octo1-Client_prod"
+    secret = "super-secret"
+    hmac_handler = Kemal::Hmac::Handler.new()
+    hmac_client = Kemal::Hmac::Client.new(client, secret, "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    ENV["#{client.upcase}_HMAC_SECRET_BLUE"] = "unset"
+    ENV["#{client.upcase}_HMAC_SECRET_GREEN"] = secret
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: no secrets found for client: Octo1-Client_prod"
+    context.kemal_authorized_client?.should eq(nil)
   end
 end
