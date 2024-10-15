@@ -339,3 +339,55 @@ To generate an HMAC secret, you can use the following command for convenience:
 ```bash
 openssl rand -hex 32
 ```
+
+## Benchmarks ⚡
+
+**TL;DR**: The `kemal-hmac` middleware has a minimal impact on the performance of a kemal application.
+
+Running `kemal` with the `kemal-hmac` middleware results in an extra `0.14ms` of latency per request on average.
+
+Whereas running Ruby + Sinatra + Puma results in an extra `118ms` of latency per request on average.
+
+[![rps](./docs/assets/rps.png)](./docs/assets/rps.png)
+
+## kemal + kemal-hmac
+
+```shell
+$ wrk -c 100 -d 40 -H "hmac-client: my_client" -H "hmac-timestamp: 2024-10-15T22:01:46Z" -H "hmac-token: 5b1d59098a2cccfb6e68bfea32dee4c19ae6bbd816d79285fbce3add5f2590d1" http://localhost:3000/applications/123/tokens/123
+Running 40s test @ http://localhost:3000/applications/123/tokens/123
+  2 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.14ms  426.66us  15.60ms   98.16%
+    Req/Sec    44.71k     3.15k   55.55k    67.75%
+  3559413 requests in 40.01s, 492.21MB read
+Requests/sec:  88965.26
+Transfer/sec:     12.30MB
+```
+
+## kemal without kemal-hmac
+
+```shell
+$ wrk -c 100 -d 40 http://localhost:3000/applications/123/tokens/123
+Running 40s test @ http://localhost:3000/applications/123/tokens/123
+  2 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.00ms  409.37us  10.66ms   97.56%
+    Req/Sec    51.30k     4.63k   66.11k    72.62%
+  4084149 requests in 40.01s, 564.77MB read
+Requests/sec: 102080.95
+Transfer/sec:     14.12MB
+```
+
+## Ruby with Sinatra + Puma
+
+```shell
+$ wrk -c 100 -d 40 http://localhost:3000/applications/123/tokens/123
+Running 40s test @ http://localhost:3000/applications/123/tokens/123
+  2 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   119.23ms  152.42ms 582.52ms   78.86%
+    Req/Sec     3.53k     1.00k    5.73k    75.50%
+  280940 requests in 40.07s, 46.24MB read
+Requests/sec:   7010.87
+Transfer/sec:      1.15MB
+```
