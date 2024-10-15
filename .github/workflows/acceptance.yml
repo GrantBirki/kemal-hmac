@@ -30,5 +30,10 @@ jobs:
       - name: bootstrap
         run: script/bootstrap --ci
 
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: bin/ameba
+
       - name: acceptance
         run: script/acceptance
