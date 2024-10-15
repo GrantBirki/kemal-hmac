@@ -157,28 +157,30 @@ export MY_CLIENT_HMAC_SECRET_BLUE="my_secret_1"
 export MY_CLIENT_HMAC_SECRET_GREEN="my_secret_2"
 ```
 
-Then simply calling `hmac_auth()` in your kemal application will automatically configure the middleware with the client names and secrets from the environment variables. Here is how it works:
+Then simply calling `hmac_auth(enable_env_lookup: true)` in your kemal application will automatically configure the middleware with the client names and secrets from the environment variables. Here is how it works:
 
-1. When the `hmac_auth()` method is called with no arguments, the middleware will look for environment variables that start with the client name in all caps and end with `HMAC_SECRET_BLUE` or `HMAC_SECRET_GREEN` (these are called the `HMAC_KEY_SUFFIX_LIST` and can be further configured with environment variables as well). For example, if the client name is `my_client`, the middleware will look for an environment variable called `MY_CLIENT_HMAC_SECRET_BLUE` or `MY_CLIENT_HMAC_SECRET_GREEN`.
+1. When the `hmac_auth()` method is called with the `enable_env_lookup: true` argument, the middleware will look for environment variables that start with the client name in all caps and end with `HMAC_SECRET_BLUE` or `HMAC_SECRET_GREEN` (these are called the `HMAC_KEY_SUFFIX_LIST` and can be further configured with environment variables as well). For example, if the client name is `my_client`, the middleware will look for an environment variable called `MY_CLIENT_HMAC_SECRET_BLUE` or `MY_CLIENT_HMAC_SECRET_GREEN`.
 2. If one or more matching secrets are found for the client name, the middleware will be configured with the client name and the secrets.
 3. The client name and secrets will be used to generate the HMAC token for incoming requests.
 4. The first matching secret for the client that successfully generates a valid HMAC token will be used to authenticate the request.
 
-Here is an example passing no params into `hmac_auth()` and letting it self-hydrate from the environment variables:
+Here is an example:
 
 ```crystal
 # file: hmac_server.cr
 require "kemal"
 require "kemal-hmac"
 
-# Initialize the HMAC middleware with no params so it can self-hydrate from the environment variables
-hmac_auth()
+# Initialize the HMAC middleware with the 'enable_env_lookup: true' param so it can self-hydrate from the environment variables
+hmac_auth(enable_env_lookup: true)
 
 # Now all endpoints are protected with HMAC authentication
 get "/" do |env|
   "Hi, %s! You sent a request that was successfully verified with HMAC auth using environment variables" % env.kemal_authorized_client?
 end
 ```
+
+> Note: The `enable_env_lookup: true` argument is optional and defaults to `false`. If you do not pass this argument, you will need to pass the `hmac_secrets` argument to the `hmac_auth` method to configure the middleware. This is the desired way to configure the middleware in production as it is more explicit, less error-prone, and performs significantly better than using environment variables.
 
 ## Configuration
 
@@ -221,7 +223,8 @@ hmac_auth(
   rejected_message_prefix: "Unauthorized:",
   hmac_key_suffix_list: ["HMAC_SECRET_BLUE", "HMAC_SECRET_GREEN"],
   hmac_key_delimiter: "_",
-  hmac_algorithm: "SHA256"
+  hmac_algorithm: "SHA256",
+  enable_env_lookup: false
 )
 
 # ... kemal logic here
