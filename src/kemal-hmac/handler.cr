@@ -28,7 +28,7 @@ module Kemal::Hmac
     #  hmac_key_suffix_list: ["HMAC_SECRET_BLUE", "HMAC_SECRET_GREEN"] - only used for env variable lookups
     #  hmac_key_delimiter: "_" - only used for env variable lookups
     #  hmac_algorithm: "SHA256"
-    #  enable_env_lookup: true (this value is set to false by default) 
+    #  enable_env_lookup: true (this value is set to false by default)
     def initialize(
       hmac_secrets : Hash(String, Array(String)) = {} of String => Array(String),
       hmac_client_header : String? = nil,

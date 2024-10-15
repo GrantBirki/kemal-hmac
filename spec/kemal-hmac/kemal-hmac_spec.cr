@@ -397,7 +397,7 @@ describe "Kemal::Hmac" do
   it "fails to flow through when fetching secrets from the env since it is disabled by default" do
     client = "Octo1-Client_prod"
     secret = "super-secret"
-    hmac_handler = Kemal::Hmac::Handler.new()
+    hmac_handler = Kemal::Hmac::Handler.new
     hmac_client = Kemal::Hmac::Client.new(client, secret, "SHA256")
     headers = hmac_client.generate_headers("/api")
 
