@@ -39,7 +39,7 @@ trap cleanup EXIT
 
 # Check if the server is up and running
 echo -e "⏳ ${BLUE}waiting for the server to be ready${OFF}"
-for i in {1..10}; do
+for i in {1..60}; do
   if curl -s http://localhost:3000 > /dev/null; then
     echo -e "✅ ${GREEN}server is ready${OFF}"
     break
