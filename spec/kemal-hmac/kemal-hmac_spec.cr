@@ -2,7 +2,9 @@ require "../spec_helper"
 
 describe "Kemal::Hmac" do
   it "uses a custom handler with path matching and sends a request to an endpoint that does not require hmac auth" do
-    hmac_handler = SpecAuthHandler.new
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {"octo-client" => ["octo-secret-blue", "octo-secret-green"]},
+    )
     request = HTTP::Request.new(
       "GET",
       "/health"
@@ -11,6 +13,27 @@ describe "Kemal::Hmac" do
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
     response = HTTP::Client::Response.from_io(io, decompress: false)
     response.status_code.should eq 404
+    context.kemal_authorized_client?.should be nil
+  end
+
+  it "uses a custom handler and fails due to no matching client secrets" do
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {} of String => Array(String),
+    )
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "HTTP_X_HMAC_CLIENT"    => "octo-client-with-no-secrets",
+        "HTTP_X_HMAC_TIMESTAMP" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc),
+        "HTTP_X_HMAC_TOKEN"     => "octo-token",
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: no secrets found for client: octo-client-with-no-secrets"
     context.kemal_authorized_client?.should be nil
   end
 
