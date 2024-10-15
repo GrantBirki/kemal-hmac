@@ -11,7 +11,7 @@ HMAC middleware for Crystal's [kemal](https://github.com/kemalcr/kemal) framewor
 Headers:
 
 ```ini
-HTTP_X_HMAC_CLIENT = "client-name-sending-request-to-the-server"
-HTTP_X_HMAC_TIMESTAMP = "2024-10-15T05:10:36Z"
-HTTP_X_HMAC_TOKEN = "LongHashHere
+hmac-client = "client-name-sending-request-to-the-server"
+hmac-timestamp = "2024-10-15T05:10:36Z"
+hmac-token = "LongHashHere
 ```
