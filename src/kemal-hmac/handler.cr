@@ -23,8 +23,6 @@ module Kemal::Hmac
     HMAC_KEY_SUFFIX_LIST         = ENV.fetch("HMAC_KEY_SUFFIX_LIST", "HMAC_SECRET_BLUE,HMAC_SECRET_GREEN").split(",").map(&.strip)
     HMAC_KEY_DELIMITER           = ENV.fetch("HMAC_KEY_DELIMITER", "_")
 
-    class InvalidSecretError < Exception; end
-
     # initialize the Kemal::Hmac::Handler
     # note: "BLUE" and "GREEN" in this context are two different secrets for the same client. This is a common pattern to allow for key rotation without downtime.
     # examples:
