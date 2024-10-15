@@ -13,14 +13,16 @@ Why should I use HMAC in a client/server system with kemal? Here are some of the
 - **Keyed Security**: Uses a secret key for hashing, making it more secure than simple hash functions
 - **Protection Against Replay Attacks**: By incorporating timestamps, HMAC helps prevent the replay of old messages
 
-This readme will be broken up into two parts. The first part will cover how to use the middleware in a kemal application. The second part will cover how to use the client to communicate with a service that uses the middleware.
+This readme will be broken up into two parts. The first part will cover how to use the server middleware in a kemal application. The second part will cover how to use the client to communicate with a server that uses the middleware.
 
 ## Server Usage
 
 Using this shard with a kemal application is simple. First, add the shard to your `shard.yml` file:
 
 ```yaml
-
+dependencies:
+  kemal-hmac:
+    github: grantbirki/kemal-hmac
 ```
 
 Now you can require the `kemal-hmac` shard in your kemal application and call it:
@@ -277,7 +279,34 @@ else
 end
 ```
 
-The `Kemal::Hmac::Client` class simplifies the process of making authenticated HTTP requests to a server that has implemented the `kemal-hmac` shard for HMAC authentication. By following the examples provided, you can easily integrate any Crystal application with a `kemal-hmac` server.
+### Example: Making an HTTP Request with the `crest` shard
+
+Here is a complete example of how to use the `Kemal::Hmac::Client` class to make an HTTP request to a remote server that uses `kemal-hmac` for authentication. This example uses the popular `crest` library for making HTTP requests.
+
+```crystal
+# Example using the popular `crest` library for making HTTP requests
+
+require "kemal-hmac" # <-- import the kemal-hmac shard
+require "crest"      # <-- here we will use the popular `crest` library
+
+# Initialize the HMAC client
+client = Kemal::Hmac::Client.new("my_client", "my_secret")
+
+path = "/"
+
+# Make the HTTP request with the generated headers to the server that uses `kemal-hmac` for authentication (using the `crest` library)
+response = Crest.get(
+  "http://localhost:3000#{path}",
+  headers: client.generate_headers(path)
+)
+
+# Handle the response
+if response.status_code == 200
+  puts "Success: #{response.body}"
+else
+  puts "Error: #{response.status_code}"
+end
+```
 
 ## Generating an HMAC secret
 
