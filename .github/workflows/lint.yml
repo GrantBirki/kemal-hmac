@@ -33,12 +33,6 @@ jobs:
       - name: bootstrap
         run: script/bootstrap --ci
 
-      - name: upload artifacts
-        if: ${{ matrix.os == 'macos-latest' }}
-        uses: actions/upload-artifact@v4
-        with:
-          path: bin/ameba
-
       - name: lint
         run: script/lint
 
