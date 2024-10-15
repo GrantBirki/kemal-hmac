@@ -2,7 +2,9 @@ require "../spec_helper"
 
 describe "Kemal::Hmac" do
   it "uses a custom handler with path matching and sends a request to an endpoint that does not require hmac auth" do
-    hmac_handler = SpecAuthHandler.new
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {"octo-client" => ["octo-secret-blue", "octo-secret-green"]},
+    )
     request = HTTP::Request.new(
       "GET",
       "/health"
@@ -11,6 +13,255 @@ describe "Kemal::Hmac" do
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
     response = HTTP::Client::Response.from_io(io, decompress: false)
     response.status_code.should eq 404
+    context.kemal_authorized_client?.should be nil
+  end
+
+  it "uses a custom handler and correct HMAC auth and the request flows through successfully" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
+  it "uses a custom handler and explicit hmac algo successfully" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+      hmac_algorithm: "SHA256"
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
+  it "uses a custom handler and explicit hmac algo for both the client and the server successfully" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+      hmac_algorithm: "SHA512"
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA512")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
+  it "uses a custom handler and explicit hmac algo and fails due to a mismatch hmac algo" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+      hmac_algorithm: "SHA512"
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: HMAC token does not match"
+    context.kemal_authorized_client?.should eq(nil)
+  end
+
+  it "uses a custom handler and correct HMAC auth and the request flows through successfully using the green secret" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
+  it "rejects the request when the HMAC token does not match exactly" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc)
+    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octoo-secret-blue")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => client,
+        "hmac-timestamp" => timestamp,
+        "hmac-token"     => hmac_token,
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: HMAC token does not match"
+    context.kemal_authorized_client?.should be nil
+  end
+
+  it "rejects the request when the HMAC token does not match exactly due to a different path" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc)
+    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octo-secret-blue")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/secure",
+      headers: HTTP::Headers{
+        "hmac-client"    => client,
+        "hmac-timestamp" => timestamp,
+        "hmac-token"     => hmac_token,
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: HMAC token does not match"
+    context.kemal_authorized_client?.should be nil
+  end
+
+  it "rejects the request when the HMAC token does not match exactly since the timestamp is different" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc + 1.second)
+    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octoo-secret-blue")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => client,
+        "hmac-timestamp" => timestamp,
+        "hmac-token"     => hmac_token,
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: HMAC token does not match"
+    context.kemal_authorized_client?.should be nil
+  end
+
+  it "uses a custom handler and fails due to no matching client secrets" do
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {} of String => Array(String),
+    )
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => "octo-client-with-no-secrets",
+        "hmac-timestamp" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc),
+        "hmac-token"     => "octo-token",
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: no secrets found for client: octo-client-with-no-secrets"
+    context.kemal_authorized_client?.should be nil
+  end
+
+  it "uses a custom handler and fails due to a failed secret regex match" do
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {} of String => Array(String),
+    )
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => "octo-client-&-bad-secret",
+        "hmac-timestamp" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc),
+        "hmac-token"     => "octo-token",
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: client name must only contain letters, numbers, -, or _"
     context.kemal_authorized_client?.should be nil
   end
 
@@ -28,7 +279,7 @@ describe "Kemal::Hmac" do
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
     response = HTTP::Client::Response.from_io(io, decompress: false)
     response.status_code.should eq 401
-    response.headers["missing-hmac-headers"].should eq "HTTP_X_HMAC_CLIENT,HTTP_X_HMAC_TIMESTAMP,HTTP_X_HMAC_TOKEN"
+    response.headers["missing-hmac-headers"].should eq "hmac-client,hmac-timestamp,hmac-token"
     response.body.should contain "Unauthorized: missing required hmac headers"
     context.kemal_authorized_client?.should eq(nil)
   end
@@ -42,7 +293,7 @@ describe "Kemal::Hmac" do
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
     response = HTTP::Client::Response.from_io(io, decompress: false)
     response.status_code.should eq 401
-    response.headers["missing-hmac-headers"].should eq "HTTP_X_HMAC_CLIENT,HTTP_X_HMAC_TIMESTAMP,HTTP_X_HMAC_TOKEN"
+    response.headers["missing-hmac-headers"].should eq "hmac-client,hmac-timestamp,hmac-token"
     response.body.should contain "Unauthorized: missing required hmac headers"
     context.kemal_authorized_client?.should eq(nil)
   end
@@ -52,12 +303,12 @@ describe "Kemal::Hmac" do
     request = HTTP::Request.new(
       "GET",
       "/",
-      headers: HTTP::Headers{"HTTP_X_HMAC_CLIENT" => "octo-client"},
+      headers: HTTP::Headers{"hmac-client" => "octo-client"},
     )
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
     response = HTTP::Client::Response.from_io(io, decompress: false)
     response.status_code.should eq 401
-    response.headers["missing-hmac-headers"].should eq "HTTP_X_HMAC_TIMESTAMP,HTTP_X_HMAC_TOKEN"
+    response.headers["missing-hmac-headers"].should eq "hmac-timestamp,hmac-token"
     response.body.should contain "Unauthorized: missing required hmac headers"
     context.kemal_authorized_client?.should eq(nil)
   end
@@ -68,9 +319,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => "octo-client",
-        "HTTP_X_HMAC_TIMESTAMP" => Time.utc.to_s,
-        "HTTP_X_HMAC_TOKEN"     => "octo-token",
+        "hmac-client"    => "octo-client",
+        "hmac-timestamp" => Time.utc.to_s,
+        "hmac-token"     => "octo-token",
       },
     )
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
@@ -86,9 +337,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => "octo-client",
-        "HTTP_X_HMAC_TIMESTAMP" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc + 100.seconds),
-        "HTTP_X_HMAC_TOKEN"     => "octo-token",
+        "hmac-client"    => "octo-client",
+        "hmac-timestamp" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc + 100.seconds),
+        "hmac-token"     => "octo-token",
       },
     )
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
@@ -104,9 +355,9 @@ describe "Kemal::Hmac" do
       "GET",
       "/",
       headers: HTTP::Headers{
-        "HTTP_X_HMAC_CLIENT"    => "octo-client",
-        "HTTP_X_HMAC_TIMESTAMP" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc - 100.seconds),
-        "HTTP_X_HMAC_TOKEN"     => "octo-token",
+        "hmac-client"    => "octo-client",
+        "hmac-timestamp" => Time::Format::ISO_8601_DATE_TIME.format(Time.utc - 100.seconds),
+        "hmac-token"     => "octo-token",
       },
     )
     io, context = create_request_and_return_io_and_context(hmac_handler, request)
@@ -114,5 +365,31 @@ describe "Kemal::Hmac" do
     response.status_code.should eq 401
     response.body.should contain "Unauthorized: Timestamp is too old or in the future (ensure it's in UTC)"
     context.kemal_authorized_client?.should eq(nil)
+  end
+
+  it "successfully flows through and passes when fetching secrets from the ENV" do
+    client = "Octo1-Client_prod"
+    secret = "super-secret"
+    hmac_handler = Kemal::Hmac::Handler.new
+    hmac_client = Kemal::Hmac::Client.new(client, secret, "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    ENV["#{client.upcase}_HMAC_SECRET_BLUE"] = "unset"
+    ENV["#{client.upcase}_HMAC_SECRET_GREEN"] = secret
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
   end
 end

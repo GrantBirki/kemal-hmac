@@ -11,7 +11,10 @@ license: MIT
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba
-    version: ~> 1.6.1
+    version: ~> 1.6.3
   kemal:
     github: kemalcr/kemal
     version: ~> 1.6.0
+  crest:
+    github: mamantoha/crest
+    version: ~> 1.4.1

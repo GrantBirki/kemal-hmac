@@ -2,7 +2,7 @@ require "spec"
 require "../src/kemal-hmac"
 
 class SpecAuthHandler < Kemal::Hmac::Handler
-  only ["/api"]
+  only ["/api", "/secure"]
 
   def call(context)
     return call_next(context) unless only_match?(context)

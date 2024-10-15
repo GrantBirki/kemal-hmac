@@ -9,3 +9,4 @@ Globs:
   - "**/*.cr"
   - "!vendor"
   - "!tmp"
+  - "!script/acceptance_tests"
