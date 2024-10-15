@@ -129,6 +129,7 @@ module Kemal::Hmac
         return
       end
 
+      # if we make it here, the request is valid so set the authorized client on the context
       context.kemal_authorized_client = client
       return call_next(context)
     end
