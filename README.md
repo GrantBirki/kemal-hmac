@@ -57,15 +57,15 @@ require "http/client" # <-- here we will just use the crystal standard library
 client = Kemal::Hmac::Client.new("my_client", "my_secret")
 
 # Generate the HMAC headers for the desired path
-path = "/api/path"
-hmac_headers = client.generate_headers(path)
+path = "/"
+headers = HTTP::Headers.new
+# loop over the generated headers and add them to the HTTP headers
+client.generate_headers(path).each do |key, value|
+  headers.add(key, value)
+end
 
 # Make the HTTP request with the generated headers to the server that uses `kemal-hmac` for authentication
-response = HTTP::Client.get("https://example.com#{path}") do |req|
-  hmac_headers.each do |key, value|
-    req.headers[key] = value
-  end
-end
+response = HTTP::Client.get("https://example.com#{path}", headers: headers)
 
 # Handle the response
 if response.status_code == 200
