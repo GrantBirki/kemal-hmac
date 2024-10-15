@@ -82,7 +82,12 @@ module Kemal::Hmac
         return
       end
 
-      timestamp_result = recent_timestamp?(headers[@hmac_timestamp_header].not_nil!, @timestamp_second_window)
+      # extract required hmac values from the request
+      client = headers[@hmac_client_header].not_nil!
+      timestamp = headers[@hmac_timestamp_header].not_nil!
+      token = headers[@hmac_token_header].not_nil!
+
+      timestamp_result = recent_timestamp?(timestamp, @timestamp_second_window)
 
       unless timestamp_result[:valid]
         context.response.status_code = @rejected_code
@@ -91,29 +96,30 @@ module Kemal::Hmac
       end
 
       # attempt to load the secrets for the given client
-      client_secrets = load_secrets(headers[@hmac_client_header].not_nil!)
+      client_secrets = load_secrets(client)
 
       # reject the request if no secrets are found for the given client
       unless client_secrets.any?
         context.response.status_code = @rejected_code
-        context.response.print "#{@rejected_message_prefix} no secrets found for client: #{headers[@hmac_client_header].not_nil!}"
+        context.response.print "#{@rejected_message_prefix} no secrets found for client: #{client}"
         return
       end
 
-      context.kemal_authorized_client = headers[@hmac_client_header]
+      context.kemal_authorized_client = client
     end
 
     # Load the secrets for the given client
     # Returns an array of strings (secrets) with all posible secrets for the given client (BLUE + GREEN)
     def load_secrets(client : String) : Array(String)
       key = client.upcase
-      unless KEY_VALIDATION_REGEX.match(key)
-        raise ArgumentError.new("Client name must only contain letters, numbers, or _")
-      end
 
       # before doing a full lookup, check the cache first
       if @secrets_cache.has_key?(key)
         return @secrets_cache[key]
+      end
+
+      unless KEY_VALIDATION_REGEX.match(key)
+        raise ArgumentError.new("client name must only contain letters, numbers, or _")
       end
 
       # if we make it here, check the environment variables
