@@ -21,6 +21,8 @@ module Kemal::Hmac
     HMAC_KEY_SUFFIX_LIST         = ENV.fetch("HMAC_KEY_SUFFIX_LIST", "HMAC_SECRET_BLUE,HMAC_SECRET_GREEN").split(",").map(&.strip)
     HMAC_KEY_DELIMITER           = ENV.fetch("HMAC_KEY_DELIMITER", "_")
 
+    class InvalidSecretError < Exception; end
+
     # initialize the Kemal::Hmac::Handler
     # note: "BLUE" and "GREEN" in this context are two different secrets for the same client. This is a common pattern to allow for key rotation without downtime.
     # examples:
@@ -98,7 +100,13 @@ module Kemal::Hmac
       end
 
       # attempt to load the secrets for the given client
-      client_secrets = load_secrets(client)
+      begin 
+        client_secrets = load_secrets(client)
+      rescue ex : InvalidSecretError
+        context.response.status_code = @rejected_code
+        context.response.print "#{@rejected_message_prefix} #{ex.message}"
+        return
+      end
 
       # reject the request if no secrets are found for the given client
       if client_secrets.empty?
@@ -121,7 +129,7 @@ module Kemal::Hmac
       end
 
       unless KEY_VALIDATION_REGEX.match(key)
-        raise ArgumentError.new("client name must only contain letters, numbers, or _")
+        raise InvalidSecretError.new("client name must only contain letters, numbers, -, or _")
       end
 
       # if we make it here, check the environment variables
