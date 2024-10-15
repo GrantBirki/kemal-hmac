@@ -85,7 +85,7 @@ module Kemal::Hmac
       # extract required hmac values from the request
       client = headers[@hmac_client_header].not_nil!
       timestamp = headers[@hmac_timestamp_header].not_nil!
-      token = headers[@hmac_token_header].not_nil!
+      # token = headers[@hmac_token_header].not_nil!
 
       timestamp_result = recent_timestamp?(timestamp, @timestamp_second_window)
 
@@ -99,7 +99,7 @@ module Kemal::Hmac
       client_secrets = load_secrets(client)
 
       # reject the request if no secrets are found for the given client
-      unless client_secrets.any?
+      if client_secrets.empty?
         context.response.status_code = @rejected_code
         context.response.print "#{@rejected_message_prefix} no secrets found for client: #{client}"
         return
@@ -123,10 +123,10 @@ module Kemal::Hmac
       end
 
       # if we make it here, check the environment variables
-      client_secrets = @hmac_key_suffix_list.map do |suffix|
+      client_secrets = @hmac_key_suffix_list.compact_map do |suffix|
         env_key = [key, suffix].join(@hmac_key_delimiter).upcase
         ENV.fetch(env_key, nil)
-      end.compact
+      end
 
       # if client_secrets is not empty, add it to the cache
       if !client_secrets.empty?
