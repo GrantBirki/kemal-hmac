@@ -29,4 +29,15 @@ describe "Kemal::Hmac::Client" do
 
     Time.parse_iso8601(headers["hmac-timestamp"]).should_not be_nil
   end
+
+  it "should generate the proper HMAC headers with underscores provided" do
+    client = Kemal::Hmac::Client.new("my_client", "my_secret")
+    headers = client.generate_headers("/api/path")
+
+    headers["hmac-client"].should eq("my_client")
+    headers["hmac-timestamp"].should match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/)
+    headers["hmac-token"].should match(/[a-f0-9]{64}/)
+
+    Time.parse_iso8601(headers["hmac-timestamp"]).should_not be_nil
+  end
 end
