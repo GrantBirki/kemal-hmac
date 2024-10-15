@@ -25,6 +25,7 @@ def hmac_auth(
   hmac_key_delimiter : String? = nil,
 )
   add_handler Kemal.config.hmac_handler.new(
+    hmac_secrets: hmac_secrets,
     hmac_client_header: hmac_client_header,
     hmac_timestamp_header: hmac_timestamp_header,
     hmac_token_header: hmac_token_header,
@@ -33,6 +34,5 @@ def hmac_auth(
     rejected_message_prefix: rejected_message_prefix,
     hmac_key_suffix_list: hmac_key_suffix_list,
     hmac_key_delimiter: hmac_key_delimiter,
-    hmac_secrets: hmac_secrets,
   )
 end

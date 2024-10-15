@@ -26,6 +26,7 @@ module Kemal::Hmac
     # initialize the Kemal::Hmac::Handler
     # note: "BLUE" and "GREEN" in this context are two different secrets for the same client. This is a common pattern to allow for key rotation without downtime.
     # examples:
+    #  hmac_secrets: {"cool-client-service" => ["BLUE_SECRET", "GREEN_SECRET"]} - explicitly set secrets for one or many clients
     #  hmac_client_header: "HTTP_X_HMAC_CLIENT"
     #  hmac_timestamp_header: "HTTP_X_HMAC_TIMESTAMP"
     #  hmac_token_header: "HTTP_X_HMAC_TOKEN"
@@ -34,8 +35,8 @@ module Kemal::Hmac
     #  rejected_message_prefix: "Unauthorized:"
     #  hmac_key_suffix_list: ["HMAC_SECRET_BLUE", "HMAC_SECRET_GREEN"] - only used for env variable lookups
     #  hmac_key_delimiter: "_" - only used for env variable lookups
-    #  hmac_secrets: {"cool-client-service" => ["BLUE_SECRET", "GREEN_SECRET"]} - explicitly set secrets for one or many clients
     def initialize(
+      hmac_secrets : Hash(String, Array(String)) = {} of String => Array(String),
       hmac_client_header : String? = nil,
       hmac_timestamp_header : String? = nil,
       hmac_token_header : String? = nil,
@@ -44,7 +45,6 @@ module Kemal::Hmac
       rejected_message_prefix : String? = nil,
       hmac_key_suffix_list : Array(String)? = nil,
       hmac_key_delimiter : String? = nil,
-      hmac_secrets : Hash(String, Array(String)) = {} of String => Array(String),
     )
       @hmac_client_header = hmac_client_header || HMAC_CLIENT_HEADER
       @hmac_timestamp_header = hmac_timestamp_header || HMAC_TIMESTAMP_HEADER
