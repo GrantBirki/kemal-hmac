@@ -28,7 +28,7 @@ module Kemal::Hmac
     #  hmac_timestamp_header: "HTTP_X_HMAC_TIMESTAMP"
     #  hmac_token_header: "HTTP_X_HMAC_TOKEN"
     #  timestamp_second_window: 30
-    #  rejected_code: 401 
+    #  rejected_code: 401
     #  rejected_message_prefix: "Unauthorized:"
     #  hmac_key_suffix_list: ["HMAC_SECRET_BLUE", "HMAC_SECRET_GREEN"] - only used for env variable lookups
     #  hmac_key_delimiter: "_" - only used for env variable lookups
@@ -80,7 +80,7 @@ module Kemal::Hmac
         context.response.headers["empty-hmac-headers"] = empty_headers.join(",")
         context.response.print "#{@rejected_message_prefix} empty required hmac headers"
         return
-      end 
+      end
 
       timestamp_result = recent_timestamp?(headers[@hmac_timestamp_header].not_nil!, @timestamp_second_window)
 
@@ -98,13 +98,13 @@ module Kemal::Hmac
         context.response.status_code = @rejected_code
         context.response.print "#{@rejected_message_prefix} no secrets found for client: #{headers[@hmac_client_header].not_nil!}"
         return
-      end 
+      end
 
       context.kemal_authorized_client = headers[@hmac_client_header]
     end
 
     # Load the secrets for the given client
-    # Returns an array of strings (secrets) with all posible secrets for the given client (BLUE + GREEN) 
+    # Returns an array of strings (secrets) with all posible secrets for the given client (BLUE + GREEN)
     def load_secrets(client : String) : Array(String)
       key = client.upcase
       unless KEY_VALIDATION_REGEX.match(key)
@@ -164,7 +164,7 @@ module Kemal::Hmac
     def validate_hmac_headers(headers : Hash(String, String?)) : Array(Array(String))
       missing_headers = headers.select { |_, v| v.nil? }.keys
       empty_headers = headers.select { |_, v| v.try(&.empty?) }.keys
-    
+
       return [missing_headers, empty_headers]
     end
   end
