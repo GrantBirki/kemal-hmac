@@ -5,5 +5,5 @@ set -e
 source script/setup-env $@
 
 echo -e "🔨 ${BLUE}building in ${PURPLE}release${BLUE} mode${OFF}"
-crystal build spec/acceptance/server.cr --exclude-warnings $SHARDS_INSTALL_PATH --release --progress --debug --error-trace
+crystal build script/acceptance_tests/server.cr --exclude-warnings $SHARDS_INSTALL_PATH --release --progress --debug --error-trace
 echo -e "📦 ${GREEN}build complete${OFF}"

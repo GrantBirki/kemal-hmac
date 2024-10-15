@@ -21,7 +21,7 @@ kill_existing_server
 
 # Start the Crystal server in the background
 echo -e "🚀 ${BLUE}starting the server${OFF}"
-crystal run spec/acceptance/server.cr --exclude-warnings $SHARDS_INSTALL_PATH &
+crystal run script/acceptance_tests/server.cr --exclude-warnings $SHARDS_INSTALL_PATH &
 
 # Get the PID of the background process
 SERVER_PID=$!
@@ -51,7 +51,7 @@ done
 
 # Run the tests
 echo -e "🧪 ${BLUE}running the acceptance tests${OFF}"
-crystal run spec/acceptance/tests.cr --exclude-warnings $SHARDS_INSTALL_PATH
+crystal run script/acceptance_tests/tests.cr --exclude-warnings $SHARDS_INSTALL_PATH
 
 # Capture the exit status of the tests
 TEST_EXIT_STATUS=$?
