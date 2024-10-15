@@ -9,7 +9,7 @@ module Kemal::Hmac
       @algorithm = Kemal::Hmac.algorithm(algo)
 
       unless KEY_VALIDATION_REGEX.match(@client.upcase)
-        raise InvalidSecretError.new("client name must only contain letters, numbers, -, or _")
+        raise InvalidFormatError.new("client name must only contain letters, numbers, -, or _")
       end
     end
 

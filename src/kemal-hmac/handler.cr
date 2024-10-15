@@ -103,7 +103,7 @@ module Kemal::Hmac
       # attempt to load the secrets for the given client
       begin
         client_secrets = load_secrets(client)
-      rescue ex : InvalidSecretError
+      rescue ex : InvalidFormatError
         context.response.status_code = @rejected_code
         context.response.print "#{@rejected_message_prefix} #{ex.message}"
         return
@@ -165,7 +165,7 @@ module Kemal::Hmac
       end
 
       unless KEY_VALIDATION_REGEX.match(key)
-        raise InvalidSecretError.new("client name must only contain letters, numbers, -, or _")
+        raise InvalidFormatError.new("client name must only contain letters, numbers, -, or _")
       end
 
       # if we make it here, check the environment variables
