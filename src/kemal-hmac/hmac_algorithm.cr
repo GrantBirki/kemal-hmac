@@ -1,3 +1,5 @@
+# https://github.com/crystal-lang/crystal/blob/dacd97bccc80b41c7d6c448cfad19d37184766e9/src/openssl/algorithm.cr#L5
+
 module Kemal::Hmac
   MD4       = 0
   MD5       = 1
@@ -12,6 +14,7 @@ module Kemal::Hmac
     OpenSSL::Algorithm.new(algorithms(algorithm))
   end
 
+  # select the algorithm based on the string name and falls back to SHA256 if no match is found
   def self.algorithms(algorithm) : Int32
     case algorithm
     when "MD4"

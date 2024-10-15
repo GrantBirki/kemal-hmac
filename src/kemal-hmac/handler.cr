@@ -154,7 +154,7 @@ module Kemal::Hmac
       if algorithm.nil?
         determined_hmac_algorithm = ALGORITHM
       else
-        determined_hmac_algorithm = algorithm(algorithm.upcase) || ALGORITHM
+        determined_hmac_algorithm = Kemal::Hmac.algorithm(algorithm.upcase) || ALGORITHM
       end
 
       return determined_hmac_algorithm

@@ -41,6 +41,85 @@ describe "Kemal::Hmac" do
     context.kemal_authorized_client?.should eq(client)
   end
 
+  it "uses a custom handler and explicit hmac algo successfully" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+      hmac_algorithm: "SHA256"
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
+  it "uses a custom handler and explicit hmac algo for both the client and the server successfully" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+      hmac_algorithm: "SHA512"
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA512")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
+  it "uses a custom handler and explicit hmac algo and fails due to a mismatch hmac algo" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+      hmac_algorithm: "SHA512"
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: HMAC token does not match"
+    context.kemal_authorized_client?.should eq(nil)
+  end
+
   it "uses a custom handler and correct HMAC auth and the request flows through successfully using the green secret" do
     client = "valid-octo-client"
     hmac_handler = SpecAuthHandler.new(
