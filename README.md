@@ -15,9 +15,11 @@ Why should I use HMAC in a client/server system with kemal? Here are some of the
 
 This readme will be broken up into two parts. The first part will cover how to use the server middleware in a kemal application. The second part will cover how to use the client to communicate with a server that uses the middleware.
 
-## Server Usage
+## Quick Start ⭐
 
-Using this shard with a kemal application is simple. First, add the shard to your `shard.yml` file:
+### Installation
+
+Simply add the shard to your `shard.yml` file:
 
 ```yaml
 dependencies:
@@ -25,7 +27,26 @@ dependencies:
     github: grantbirki/kemal-hmac
 ```
 
-Now you can require the `kemal-hmac` shard in your kemal application and call it:
+### Basic Example
+
+The most basic example possible enabling HMAC authentication for all routes in a kemal application:
+
+```crystal
+require "kemal"
+require "kemal-hmac"
+
+hmac_auth({"my_client" => ["my_secret"]})
+
+get "/" do |env|
+  "Hi, %s! You passed HMAC auth" % env.kemal_authorized_client?
+end
+
+Kemal.run
+```
+
+## Server Usage
+
+First, you must require the `kemal-hmac` shard in your kemal application and call it:
 
 ```crystal
 # file: hmac_server.cr
