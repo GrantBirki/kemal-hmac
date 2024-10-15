@@ -4,6 +4,7 @@ require "./kemal-hmac/**"
 
 module Kemal
   module Hmac
+    KEY_VALIDATION_REGEX = /^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$/
   end
 end
 
