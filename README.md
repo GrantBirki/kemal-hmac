@@ -4,6 +4,17 @@
 
 HMAC middleware for Crystal's [kemal](https://github.com/kemalcr/kemal) framework
 
+## About
+
+Why should I use HMAC in a client/server system with kemal? Here are some of the benefits:
+
+- **Data Integrity**: HMAC ensures that the data hasn't been tampered with during transit
+- **Authentication**: Verifies the identity of the sender, providing a level of trust in the communication
+- **Keyed Security**: Uses a secret key for hashing, making it more secure than simple hash functions
+- **Protection Against Replay Attacks**: By incorporating timestamps, HMAC helps prevent the replay of old messages
+
+This readme will be broken up into two parts. The first part will cover how to use the middleware in a kemal application. The second part will cover how to use the client to communicate with a service that uses the middleware.
+
 ## Client Usage
 
 Headers:
@@ -78,3 +89,11 @@ end
 ### Conclusion
 
 The `Kemal::Hmac::Client` class simplifies the process of making authenticated HTTP requests to a server that has implemented the `kemal-hmac` shard for HMAC authentication. By following the examples provided, you can easily integrate any Crystal application with a `kemal-hmac` server.
+
+## Generating an HMAC secret
+
+To generate an HMAC secret, you can use the following command for convenience:
+
+```bash
+openssl rand -hex 32
+```
