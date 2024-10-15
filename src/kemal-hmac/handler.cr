@@ -1,4 +1,6 @@
 require "kemal"
+require "./token"
+require "crypto/subtle"
 
 module Kemal::Hmac
   # This middleware adds hmac support to your application.
@@ -62,6 +64,7 @@ module Kemal::Hmac
       ]
 
       @secrets_cache = hmac_secrets
+      @secrets_cache = normalize_client_hash(@secrets_cache)
     end
 
     def call(context)
@@ -87,7 +90,7 @@ module Kemal::Hmac
       # extract required hmac values from the request
       client = headers[@hmac_client_header].not_nil!
       timestamp = headers[@hmac_timestamp_header].not_nil!
-      # token = headers[@hmac_token_header].not_nil!
+      token = headers[@hmac_token_header].not_nil!
 
       # validate the timestamp
       timestamp_result = recent_timestamp?(timestamp, @timestamp_second_window)
@@ -115,7 +118,41 @@ module Kemal::Hmac
         return
       end
 
+      token_valid = false
+      client_secrets.each do |secret|
+        token_valid = valid_token?(token, secret, client, context.request.path, timestamp)
+        break if token_valid
+      end
+
+      # if no valid token was found, reject the request
+      unless token_valid
+        context.response.status_code = @rejected_code
+        context.response.print "#{@rejected_message_prefix} HMAC token does not match"
+        return
+      end
+
       context.kemal_authorized_client = client
+      return call_next(context)
+    end
+
+    # Check the request token by building our own with our known metadata and secret
+    # :param request_token: token provided in request
+    # :param secret: secret used to build token
+    # :param client: client name used to build token
+    # :param path: path used to build token
+    # :param timestamp: timestamp used to build token
+    # :return: True if token matches, False otherwise
+    def valid_token?(request_token, secret, client, path, timestamp)
+      token = Kemal::Hmac::Token.new(client, path, timestamp)
+      Crypto::Subtle.constant_time_compare(token.hexdigest(secret), request_token)
+    end
+
+    # A helper method to upcase all the keys in a dictionary
+    # This ensures that client names passed in via headers exactly match the keys in the secrets cache 
+    def normalize_client_hash(dict : Hash(String, Array(String))) : Hash(String, Array(String))
+      dict.each_with_object({} of String => Array(String)) do |(k, v), new_dict|
+        new_dict[k.upcase] = v
+      end
     end
 
     # Load the secrets for the given client

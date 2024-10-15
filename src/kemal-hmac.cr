@@ -5,6 +5,7 @@ require "./kemal-hmac/**"
 module Kemal
   module Hmac
     KEY_VALIDATION_REGEX = /^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$/
+    ALGORITHM = algorithm(ENV.fetch("HMAC_ALGORITHM", "SHA256").upcase)
   end
 end
 

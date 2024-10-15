@@ -16,6 +16,31 @@ describe "Kemal::Hmac" do
     context.kemal_authorized_client?.should be nil
   end
 
+  it "uses a custom handler and correct HMAC auth and the request flows through successfully" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc)
+    hmac_token = Kemal::Hmac::Token.new(client, "/api", timestamp).hexdigest("octo-secret-blue")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "HTTP_X_HMAC_CLIENT"    => client,
+        "HTTP_X_HMAC_TIMESTAMP" => timestamp,
+        "HTTP_X_HMAC_TOKEN"     => hmac_token,
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
   it "uses a custom handler and fails due to no matching client secrets" do
     hmac_handler = SpecAuthHandler.new(
       hmac_secrets: {} of String => Array(String),
