@@ -2,27 +2,61 @@
 
 source script/setup-env $@
 
-# start and background the server process
-echo -e "🚀 ${BLUE}starting the server${OFF}"
+# Function to kill any existing server processes
+kill_existing_server() {
+  echo "Checking for existing server processes on port 3000..."
+  set +e
+  existing_pid=$(lsof -ti :3000)
+  set -e
+  if [ -n "$existing_pid" ]; then
+    echo "Killing existing server process with PID $existing_pid..."
+    kill -9 $existing_pid
+  else
+    echo "No existing server process found on port 3000."
+  fi
+}
+
+# Kill any existing server processes
+kill_existing_server
 
 # Start the Crystal server in the background
-crystal run spec/acceptance/server.cr &
+echo -e "🚀 ${BLUE}starting the server${OFF}"
+crystal run spec/acceptance/server.cr --exclude-warnings $SHARDS_INSTALL_PATH &
 
 # Get the PID of the background process
 SERVER_PID=$!
+echo "Server started with PID $SERVER_PID"
 
 # Define a function to kill the background process
 cleanup() {
-  echo "Killing background process..."
+  echo "Killing background process with PID $SERVER_PID..."
   kill $SERVER_PID
+  kill_existing_server
 }
 
 # Set the trap to call the cleanup function on script exit
 trap cleanup EXIT
 
-# run the tests
-echo -e "🧪 ${BLUE}running the acceptance tests${OFF}"
-crystal run spec/acceptance/tests.cr
+# Check if the server is up and running
+echo -e "⏳ ${BLUE}waiting for the server to be ready${OFF}"
+for i in {1..10}; do
+  if curl -s http://localhost:3000 > /dev/null; then
+    echo -e "✅ ${GREEN}server is ready${OFF}"
+    break
+  else
+    echo -e "⏳ ${YELLOW}server not ready, retrying in 1 second${OFF}"
+    sleep 1
+  fi
+done
 
-# Wait for the background process to finish (if needed)
-wait $SERVER_PID
+# Run the tests
+echo -e "🧪 ${BLUE}running the acceptance tests${OFF}"
+crystal run spec/acceptance/tests.cr --exclude-warnings $SHARDS_INSTALL_PATH
+
+# Capture the exit status of the tests
+TEST_EXIT_STATUS=$?
+echo "Tests completed with exit status $TEST_EXIT_STATUS"
+
+kill_existing_server
+
+exit $TEST_EXIT_STATUS
