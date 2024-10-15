@@ -125,6 +125,85 @@ get "/admin" do |env|
 end
 ```
 
+### Environment Variable Configuration
+
+The `kemal-hmac` server middleware can be configured completely through environment variables. For example, if you had the following environment variables set:
+
+```bash
+export MY_CLIENT_HMAC_SECRET_BLUE="my_secret_1"
+export MY_CLIENT_HMAC_SECRET_GREEN="my_secret_2"
+```
+
+Then simply calling `hmac_auth()` in your kemal application will automatically configure the middleware with the client names and secrets from the environment variables. Here is how it works:
+
+1. When the `hmac_auth()` method is called with no arguments, the middleware will look for environment variables that start with the client name in all caps and end with `HMAC_SECRET_BLUE` or `HMAC_SECRET_GREEN` (these are called the `HMAC_KEY_SUFFIX_LIST` and can be further configured with environment variables as well). For example, if the client name is `my_client`, the middleware will look for an environment variable called `MY_CLIENT_HMAC_SECRET_BLUE` or `MY_CLIENT_HMAC_SECRET_GREEN`.
+2. If one or more matching secrets are found for the client name, the middleware will be configured with the client name and the secrets.
+3. The client name and secrets will be used to generate the HMAC token for incoming requests.
+4. The first matching secret for the client that successfully generates a valid HMAC token will be used to authenticate the request.
+
+Here is an example passing no params into `hmac_auth()` and letting it self-hydrate from the environment variables:
+
+```crystal
+# file: hmac_server.cr
+require "kemal"
+require "kemal-hmac"
+
+# Initialize the HMAC middleware with no params so it can self-hydrate from the environment variables
+hmac_auth()
+
+# Now all endpoints are protected with HMAC authentication
+get "/" do |env|
+  "Hi, %s! You sent a request that was successfully verified with HMAC auth using environment variables" % env.kemal_authorized_client?
+end
+```
+
+## Configuration
+
+This section goes into detail on the configuration options available for the `kemal-hmac` middleware and the client utility.
+
+### Global Environment Variables
+
+These environment variables can be set globally for the `kemal-hmac` middleware and the client utility to change the default behavior.
+
+| Environment Variable | Default Value | Description |
+| -------------------- | ------------- | ----------- |
+| `HMAC_CLIENT_HEADER` | `hmac-client` | The name of the header that contains the client name |
+| `HMAC_TIMESTAMP_HEADER` | `hmac-timestamp` | The name of the header that contains the iso8601 timestamp |
+| `HMAC_TOKEN_HEADER` | `hmac-token` | The name of the header that contains the HMAC token |
+| `HMAC_TIMESTAMP_SECOND_WINDOW` | `30` | The number of seconds before and after the current time that a timestamp is considered valid - helps with clock drift |
+| `HMAC_REJECTED_CODE` | `401` | The status code to return when a request is rejected |
+| `HMAC_REJECTED_MESSAGE_PREFIX` | `Unauthorized:` | The prefix to add to the response body when a request is rejected |
+| `HMAC_KEY_SUFFIX_LIST` | `HMAC_SECRET_BLUE,HMAC_SECRET_GREEN` | A comma-separated list of key suffixes to use for looking up secrets in the environment. Using a blue/green pattern is best for key rotation |
+| `HMAC_KEY_DELIMITER` | `_` | The delimiter to use for separating the client name from the key suffix in the environment variable name |
+| `HMAC_ALGORITHM` | `SHA256` | The algorithm to use for generating the HMAC token. See [here](./src/kemal-hmac/hmac_algorithm.cr) for all supported algorithms |
+
+### Direct Middleware Configuration
+
+Passing in configuration options directly to the `hmac_auth` method is the most explicit way to configure the `kemal-hmac` middleware and these options take precedence over the environment variables.
+
+```crystal
+# A very verbose example of how to configure the middleware
+# file: hmac_server.cr
+
+require "kemal"
+require "kemal-hmac"
+
+hmac_auth(
+  hmac_secrets: {"my_client" => ["my_secret_blue", "my_secret_green"], "my_other_client" => ["my_other_secret"]},
+  hmac_client_header: "hmac-client",
+  hmac_timestamp_header: "hmac-timestamp",
+  hmac_token_header: "hmac-token",
+  timestamp_second_window: 30,
+  rejected_code: 401,
+  rejected_message_prefix: "Unauthorized:",
+  hmac_key_suffix_list: ["HMAC_SECRET_BLUE", "HMAC_SECRET_GREEN"],
+  hmac_key_delimiter: "_",
+  hmac_algorithm: "SHA256"
+)
+
+# ... kemal logic here
+```
+
 ## Client Usage
 
 The `Kemal::Hmac::Client` class is designed to facilitate making HTTP requests to a remote server that uses HMAC (Hash-based Message Authentication Code) authentication implemented by this same shard. This class helps generate the necessary HMAC headers required for authenticating requests.
