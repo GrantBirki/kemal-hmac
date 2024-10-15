@@ -27,7 +27,7 @@ module Kemal::Hmac
     #  rejected_message_prefix: "Unauthorized:"
     #  hmac_key_suffix_list: ["HMAC_SECRET_BLUE", "HMAC_SECRET_GREEN"] - only used for env variable lookups
     #  hmac_key_delimiter: "_" - only used for env variable lookups
-    #  hmac_algorithm: "SHA256" 
+    #  hmac_algorithm: "SHA256"
     def initialize(
       hmac_secrets : Hash(String, Array(String)) = {} of String => Array(String),
       hmac_client_header : String? = nil,
@@ -48,12 +48,7 @@ module Kemal::Hmac
       @rejected_message_prefix = rejected_message_prefix || HMAC_REJECTED_MESSAGE_PREFIX
       @hmac_key_suffix_list = hmac_key_suffix_list || HMAC_KEY_SUFFIX_LIST
       @hmac_key_delimiter = hmac_key_delimiter || HMAC_KEY_DELIMITER
-
-      if hmac_algorithm.nil?
-        @hmac_algorithm = ALGORITHM
-      else
-        @hmac_algorithm = algorithm(hmac_algorithm.upcase) || ALGORITHM
-      end
+      @hmac_algorithm = fetch_hmac_algorithm(hmac_algorithm)
 
       @required_hmac_headers = [
         @hmac_client_header,
@@ -152,6 +147,17 @@ module Kemal::Hmac
       dict.each_with_object({} of String => Array(String)) do |(k, v), new_dict|
         new_dict[k.upcase] = v
       end
+    end
+
+    def fetch_hmac_algorithm(algorithm : String?) : OpenSSL::Algorithm
+      determined_hmac_algorithm : OpenSSL::Algorithm
+      if algorithm.nil?
+        determined_hmac_algorithm = ALGORITHM
+      else
+        determined_hmac_algorithm = algorithm(algorithm.upcase) || ALGORITHM
+      end
+
+      return determined_hmac_algorithm
     end
 
     # Load the secrets for the given client
