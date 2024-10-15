@@ -148,7 +148,7 @@ module Kemal::Hmac
     end
 
     # A helper method to upcase all the keys in a dictionary
-    # This ensures that client names passed in via headers exactly match the keys in the secrets cache 
+    # This ensures that client names passed in via headers exactly match the keys in the secrets cache
     def normalize_client_hash(dict : Hash(String, Array(String))) : Hash(String, Array(String))
       dict.each_with_object({} of String => Array(String)) do |(k, v), new_dict|
         new_dict[k.upcase] = v
