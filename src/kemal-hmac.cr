@@ -12,10 +12,26 @@ module Kemal
 end
 
 # Helper to easily add HTTP Basic Auth support.
-def hmac_auth(hmac_client_header : String? = nil, hmac_timestamp_header : String? = nil, hmac_token_header : String? = nil)
+def hmac_auth(
+  hmac_client_header : String? = nil,
+  hmac_timestamp_header : String? = nil,
+  hmac_token_header : String? = nil,
+  timestamp_second_window : Int32? = nil,
+  rejected_code : Int32? = nil,
+  rejected_message_prefix : String? = nil,
+  hmac_key_suffix_list : Array(String)? = nil,
+  hmac_key_delimiter : String? = nil,
+  hmac_secrets : Hash(String, Array(String)) = {} of String => Array(String)
+ )
   add_handler Kemal.config.hmac_handler.new(
     hmac_client_header: hmac_client_header,
     hmac_timestamp_header: hmac_timestamp_header,
-    hmac_token_header: hmac_token_header
+    hmac_token_header: hmac_token_header,
+    timestamp_second_window: timestamp_second_window,
+    rejected_code: rejected_code,
+    rejected_message_prefix: rejected_message_prefix,
+    hmac_key_suffix_list: hmac_key_suffix_list,
+    hmac_key_delimiter: hmac_key_delimiter,
+    hmac_secrets: hmac_secrets,
   )
 end
