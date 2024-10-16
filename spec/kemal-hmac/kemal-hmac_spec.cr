@@ -41,6 +41,56 @@ describe "Kemal::Hmac" do
     context.kemal_authorized_client?.should eq(client)
   end
 
+  it "uses a custom handler and correct HMAC auth and the request flows through successfully with query string params" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api?foo=bar&moon=star",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
+  it "uses a custom handler and correct HMAC auth and the request flows through successfully with query string params incorrecty in the client" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api?cat=dog&moon=star&q=1")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api?foo=bar&moon=star",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => headers["hmac-timestamp"],
+        "hmac-token"     => headers["hmac-token"],
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 404
+    context.kemal_authorized_client?.should eq(client)
+  end
+
   it "uses a custom handler and explicit hmac algo successfully" do
     client = "valid-octo-client"
     hmac_handler = SpecAuthHandler.new(

@@ -22,7 +22,7 @@ module Kemal::Hmac
     # :return: a Hash of the HMAC headers
     def generate_headers(path : String) : Hash(String, String)
       timestamp = Time::Format::ISO_8601_DATE_TIME.format(Time.utc)
-      hmac_token = Kemal::Hmac::Token.new(@client, path, timestamp, @algorithm).hexdigest(@secret)
+      hmac_token = Kemal::Hmac::Token.new(@client, path.split("?").first, timestamp, @algorithm).hexdigest(@secret)
 
       return {
         HMAC_CLIENT_HEADER    => @client,
