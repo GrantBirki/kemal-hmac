@@ -20,7 +20,7 @@ post "/submit" do |env|
 end
 
 # catch-all routes for all other requests and methods
-# ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"]
+# ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
 get "/catch-all" do |env|
   "Hi, %s! Welcome to catch-all" % env.kemal_authorized_client?
 end
