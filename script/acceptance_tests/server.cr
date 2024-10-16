@@ -15,4 +15,35 @@ get "/crest-client" do |env|
   "Hi, %s! You sent a request that was successfully verified with HMAC auth for the crest-client" % env.kemal_authorized_client?
 end
 
+post "/submit" do |env|
+  "Hi, %s! I got your POST request" % env.kemal_authorized_client?
+end
+
+# catch-all routes for all other requests and methods
+# ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"] 
+get "/catch-all" do |env|
+  "Hi, %s! Welcome to catch-all" % env.kemal_authorized_client?
+end
+
+post "/catch-all" do |env|
+  "Hi, %s! Welcome to catch-all" % env.kemal_authorized_client?
+end
+
+put "/catch-all" do |env|
+  "Hi, %s! Welcome to catch-all" % env.kemal_authorized_client?
+end
+
+patch "/catch-all" do |env|
+  "Hi, %s! Welcome to catch-all" % env.kemal_authorized_client?
+end
+
+delete "/catch-all" do |env|
+  "Hi, %s! Welcome to catch-all" % env.kemal_authorized_client?
+end
+
+options "/catch-all" do |env|
+  "Hi, %s! Welcome to catch-all" % env.kemal_authorized_client?
+end
+
+
 Kemal.run
