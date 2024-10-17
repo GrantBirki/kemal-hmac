@@ -6,25 +6,28 @@ require "spec"
 describe "All HTTP Methods" do
   ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"].each do |method|
     it "successfully validates a #{method} request" do
-      client = Kemal::Hmac::Client.new("my_standard_client", "my_secret_2")
+      hmac_client = Kemal::Hmac::Client.new("my_standard_client", "my_secret_2")
 
       path = "/catch-all"
 
       headers = HTTP::Headers.new
-      client.generate_headers(path).each do |key, value|
+      hmac_client.generate_headers(path).each do |key, value|
         headers.add(key, value)
       end
 
-      response = HTTP::Client.get("http://localhost:3000#{path}", headers: headers)
-
       request = HTTP::Request.new(
         method,
-        "/api",
+        path,
         headers: headers,
       )
 
+      uri = URI.parse("http://localhost:3000")
+      http_client = HTTP::Client.new(uri)
+
+      response = http_client.exec(request)
+
       response.status_code.should eq 200
-      response.body.should contain "Hi, my_standard_client!"
+      response.body.should contain "Hi, my_standard_client! Welcome to catch-all"
     end
   end
 end
