@@ -21,6 +21,25 @@ fi
 
 crystal build "$DIR/script/require_spec.cr" -D skip-integration -o "$DIR/bin/require_spec" --exclude-warnings $SHARDS_INSTALL_PATH
 
+if [ -d "$DIR/coverage" ]; then
+  rm -rf "$DIR/coverage"
+fi
+
+mkdir -p "$DIR/coverage"
+
 $KCOV_BIN --clean --include-path=$DIR/src "$DIR/coverage" "$DIR/bin/require_spec"
 
+coverage=0
+
+# grep index.js for "covered":"100.0" to check if all files have 100% coverage
+if grep -q '"covered":"100.0"' "$DIR/coverage/index.js"; then
+  echo -e "✅ ${GREEN}All files have 100% coverage!${OFF}"
+  coverage=0
+else
+  echo -e "❌ ${RED}Some files do not have 100% coverage!${OFF}"
+  coverage=1
+fi
+
 CRYSTAL_OPTS="" crystal tool unreachable "$DIR/script/require_spec.cr" --check
+
+exit $coverage
