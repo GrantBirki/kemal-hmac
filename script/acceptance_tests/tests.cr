@@ -1,7 +1,70 @@
 require "../../src/kemal-hmac"
 require "crest"
 require "http/client"
+require "http/web_socket"
 require "spec"
+
+describe "websocket" do
+  it "successfully sends a websocket request to the server with HMAC auth" do
+    hmac_client = Kemal::Hmac::Client.new("my_ws_client", "my_secret_3")
+
+    path = "/websocket"
+
+    headers = HTTP::Headers.new
+    hmac_client.generate_headers(path).each do |key, value|
+      headers.add(key, value)
+    end
+
+    # Open websocket connection
+    ws = HTTP::WebSocket.new(
+      URI.parse("ws://localhost:3000/websocket"),
+      headers: headers
+    )
+
+    response = ""
+
+    # Set callback
+    ws.on_message do |msg|
+      response = msg
+    end
+
+    ws.run
+    ws.close
+
+    response.should eq "websocket success"
+  end
+
+  it "does not provide HMAC headers and fails the websocket request" do
+    hmac_client = Kemal::Hmac::Client.new("my_ws_client", "invalid_secret")
+
+    path = "/websocket"
+
+    headers = HTTP::Headers.new
+    hmac_client.generate_headers(path).each do |key, value|
+      headers.add(key, value)
+    end
+
+    begin
+      ws = HTTP::WebSocket.new(
+        URI.parse("ws://localhost:3000/websocket"),
+        headers: headers
+      )
+    rescue ex : Socket::Error
+      ex.message.not_nil!.should contain "Handshake got denied. Status code was 401."
+    end
+  end
+
+  it "does not provide the correct HMAC headers and fails the websocket request" do
+    begin
+      ws = HTTP::WebSocket.new(
+        URI.parse("ws://localhost:3000/websocket"),
+        headers: HTTP::Headers.new
+      )
+    rescue ex : Socket::Error
+      ex.message.not_nil!.should contain "Handshake got denied. Status code was 401."
+    end
+  end
+end
 
 describe "All HTTP Methods" do
   ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"].each do |method|

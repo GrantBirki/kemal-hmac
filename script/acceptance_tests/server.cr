@@ -1,7 +1,13 @@
 require "kemal"
 require "../../src/kemal-hmac"
 
-hmac_auth({"my_crest_client" => ["my_secret"], "my_standard_client" => ["my_secret_1", "my_secret_2"]})
+hmac_auth(
+  {
+    "my_crest_client"    => ["my_secret"],
+    "my_standard_client" => ["my_secret_1", "my_secret_2"],
+    "my_ws_client"       => ["my_secret_3"],
+  }
+)
 
 get "/" do |env|
   "Hi, %s! You sent a request that was successfully verified with HMAC auth" % env.kemal_authorized_client?
@@ -43,6 +49,11 @@ end
 
 options "/catch-all" do |env|
   "Hi, %s! Welcome to catch-all" % env.kemal_authorized_client?
+end
+
+ws "/websocket" do |socket|
+  socket.send "websocket success"
+  socket.close
 end
 
 Kemal.run
