@@ -68,6 +68,12 @@ get "/" do |env|
   "Hi, %s! You sent a request that was successfully verified with HMAC auth" % env.kemal_authorized_client?
 end
 
+# The `hmac_auth` method also protects websocket routes
+ws "/websocket" do |socket|
+  socket.send "HMAC protected websocket route, hooray!"
+  socket.close
+end
+
 Kemal.run
 
 # $ crystal run hmac_server.cr
