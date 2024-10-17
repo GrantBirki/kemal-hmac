@@ -3,9 +3,6 @@
 set -e
 
 source script/setup-env $@
-
 echo -e "🧹 ${BLUE}formatting ${PURPLE}crystal${BLUE} files...${OFF}"
-
 crystal tool format $@
-
 echo -e "✅ ${GREEN}formatting complete!${OFF}"

@@ -195,6 +195,33 @@ describe "Kemal::Hmac" do
     context.kemal_authorized_client?.should eq(client)
   end
 
+  it "fails when multiple of the required HMAC headers are an empty string" do
+    client = "valid-octo-client"
+    hmac_handler = SpecAuthHandler.new(
+      hmac_secrets: {client => ["octo-secret-blue", "octo-secret-green"]},
+    )
+
+    hmac_client = Kemal::Hmac::Client.new(client, "octo-secret-green", "SHA256")
+    headers = hmac_client.generate_headers("/api")
+
+    request = HTTP::Request.new(
+      "GET",
+      "/api",
+      headers: HTTP::Headers{
+        "hmac-client"    => headers["hmac-client"],
+        "hmac-timestamp" => "",
+        "hmac-token"     => "",
+      },
+    )
+
+    io, context = create_request_and_return_io_and_context(hmac_handler, request)
+    response = HTTP::Client::Response.from_io(io, decompress: false)
+    response.status_code.should eq 401
+    response.body.should contain "Unauthorized: empty required hmac headers"
+    context.kemal_authorized_client?.should eq(nil)
+    context.response.headers["empty-hmac-headers"].should eq "hmac-timestamp,hmac-token"
+  end
+
   it "rejects the request when the HMAC token does not match exactly" do
     client = "valid-octo-client"
     hmac_handler = SpecAuthHandler.new(
