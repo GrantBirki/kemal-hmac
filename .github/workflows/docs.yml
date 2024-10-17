@@ -6,13 +6,12 @@ on:
       - main
   pull_request:
 
-permissions:
-  contents: read
-
 jobs:
-  docs:
-    name: docs
+  build:
+    name: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: checkout
@@ -32,3 +31,26 @@ jobs:
 
       - name: builds docs
         run: crystal docs
+
+      - name: upload static files as artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3.0.1
+        with:
+          path: docs/
+
+  deploy:
+    name: deploy
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
