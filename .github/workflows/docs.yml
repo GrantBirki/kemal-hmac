@@ -30,7 +30,9 @@ jobs:
         run: script/bootstrap --ci
 
       - name: builds docs
-        run: crystal docs
+        run: |
+          source script/setup-env
+          crystal docs
 
       - name: upload static files as artifact
         id: deployment
