@@ -133,12 +133,12 @@ module Kemal::Hmac
     end
 
     # Check the request token by building our own with our known metadata and secret
-    # :param request_token: token provided in request
-    # :param secret: secret used to build token
-    # :param client: client name used to build token
-    # :param path: path used to build token
-    # :param timestamp: timestamp used to build token
-    # :return: True if token matches, False otherwise
+    # `request_token` token provided in request
+    # `secret` secret used to build token
+    # `client` client name used to build token
+    # `path` path used to build token
+    # `timestamp` timestamp used to build token
+    # returns True if token matches, False otherwise
     def valid_token?(request_token, secret, client, path, timestamp)
       token = Kemal::Hmac::Token.new(client, path, timestamp, @hmac_algorithm)
       Crypto::Subtle.constant_time_compare(token.hexdigest(secret), request_token)
